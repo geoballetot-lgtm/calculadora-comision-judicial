@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Calculadora de comisión judicial</title>
+  <style>
+    :root { --ink:#16243a; --blue:#1e4d7b; --pale:#edf5fb; --line:#d6e0ea; --gold:#e8a93a; --red:#b23a35; --green:#16734b; }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--ink); font:14px/1.45 Inter,Segoe UI,Arial,sans-serif; background:#f6f8fb; }
+    header { color:#fff; padding:42px max(24px, calc((100vw - 1220px)/2)); background:linear-gradient(125deg,#102842,#245b8a); }
+    h1 { margin:0 0 8px; font-size:clamp(26px,4vw,42px); letter-spacing:-.7px; }
+    header p { margin:0; max-width:760px; color:#d9e9f7; font-size:16px; }
+    main { max-width:1220px; margin:28px auto 70px; padding:0 20px; }
+    .toolbar, .card { background:#fff; border:1px solid var(--line); border-radius:14px; box-shadow:0 5px 18px #152c4310; }
+    .toolbar { display:flex; align-items:center; gap:18px; justify-content:space-between; padding:18px 20px; margin-bottom:20px; }
+    .actions { display:flex; align-items:end; gap:10px; }
+    label { display:grid; gap:4px; font-size:12px; color:#526478; font-weight:700; }
+    input[type="month"] { border:1px solid #c5d2df; border-radius:8px; padding:9px; background:#fff; color:#27394c; font:inherit; }
+    .period { font-weight:700; font-size:18px; }
+    .muted { color:#617083; }
+    button { appearance:none; border:0; border-radius:9px; background:var(--blue); color:white; padding:11px 16px; font-weight:700; cursor:pointer; }
+    button:hover { background:#153c63; }
+    .summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin-bottom:20px; }
+    .card { padding:18px; }
+    .card h2 { margin:0 0 14px; font-size:14px; color:#526478; text-transform:uppercase; letter-spacing:.06em; }
+    .amount { font-size:27px; font-weight:800; letter-spacing:-.5px; }
+    .grid { display:grid; grid-template-columns:1.3fr .7fr; gap:20px; align-items:start; }
+    .table-wrap { overflow:auto; }
+    table { width:100%; border-collapse:collapse; white-space:nowrap; }
+    th { text-align:left; background:var(--pale); color:#3f5872; font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
+    th,td { padding:11px 12px; border-bottom:1px solid #e6edf4; }
+    td.num, th.num { text-align:right; }
+    tr:last-child td { border-bottom:0; }
+    select { border:1px solid #c5d2df; border-radius:6px; padding:6px; background:#fff9dd; color:#27394c; font:inherit; }
+    .pill { display:inline-block; padding:3px 8px; border-radius:99px; font-size:12px; font-weight:700; }
+    .pill.castigo { color:#8a2f2c; background:#fbe4e3; }
+    .pill.vigente { color:#17633f; background:#dff3e9; }
+    .notice { margin:20px 0; padding:14px 16px; border-left:4px solid var(--gold); background:#fff8e7; border-radius:0 8px 8px 0; }
+    .error { border-color:var(--red); background:#fff0ef; }
+    .sources { margin-top:20px; font-size:13px; color:#5b6c7d; }
+    a { color:#1c5f99; }
+    .empty { color:#708093; padding:24px 10px; }
+    @media(max-width:820px) { .summary,.grid { grid-template-columns:1fr; } .toolbar { align-items:flex-start; flex-direction:column; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Calculadora de comisión judicial</h1>
+    <p>Modelo Judicial B. Cruza pagos, matriz vigente y metas históricas para calcular tasa y comisión por cartera.</p>
+  </header>
+  <main>
+    <section class="toolbar">
+      <div><div class="muted">Período aplicado</div><div class="period" id="period">Cargando…</div><div class="muted" id="rule"></div></div>
+      <div class="actions"><label>Mes a calcular<input id="monthPicker" type="month" /></label><button id="refresh">Actualizar datos</button></div>
+    </section>
+    <div id="message"></div>
+    <section class="summary" id="summary"></section>
+    <section class="grid">
+      <article class="card"><h2>Detalle de pagos</h2><div class="table-wrap" id="details"></div></article>
+      <aside class="card"><h2>Reglas aplicadas</h2><p>141 y 241 se clasifican como <b>castigo</b>. Los demás módulos se tratan como <b>vigente</b>.</p><p>La antigüedad judicial selecciona inicialmente la ruta de menos o mayor de un año. Si existe número de cuota, se asigna la ruta de cuota refinanciada/fraccionada.</p><p class="muted">Puedes ajustar la ruta de cada pago para atender una excepción antes de validar el resultado.</p></aside>
+    </section>
+    <p class="sources">Fuentes: <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_8rxBU1DfWqyQMTgDon2CISw65lbLV3cJy5GIwPmrLUlaztZ8t1yF5KQCXOj3AXkpWTH-m9PVNjkz/pubhtml" target="_blank" rel="noreferrer">base de pagos y metas</a> · <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vST45TEkt8-r1yK85rIqJO9joI4nKbOzgdJb3C7zUkWNwI1ZWYd4P75c54ReN4EWU7MBf_v8z-Ln5_C/pubhtml" target="_blank" rel="noreferrer">matriz judicial</a>.</p>
+  </main>
+  <script>
+    const PAYMENTS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_8rxBU1DfWqyQMTgDon2CISw65lbLV3cJy5GIwPmrLUlaztZ8t1yF5KQCXOj3AXkpWTH-m9PVNjkz/pub?gid=465128810&single=true&output=csv';
+    const METAS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_8rxBU1DfWqyQMTgDon2CISw65lbLV3cJy5GIwPmrLUlaztZ8t1yF5KQCXOj3AXkpWTH-m9PVNjkz/pub?gid=2079732674&single=true&output=csv';
+    const MATRIX = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vST45TEkt8-r1yK85rIqJO9joI4nKbOzgdJb3C7zUkWNwI1ZWYd4P75c54ReN4EWU7MBf_v8z-Ln5_C/pub?gid=0&single=true&output=csv';
+    const rates = { VIGENTE:[[0,.6,[.05,.06,.05]],[.6001,.8,[.09,.1,.09]],[.8001,.9,[.1,.11,.1]],[.9001,1,[.11,.12,.11]],[1.0001,1.05,[.12,.13,.12]],[1.0501,1.1,[.13,.14,.13]],[1.1001,1.15,[.14,.15,.14]],[1.1501,1.2,[.15,.16,.15]],[1.2001,999,[.16,.17,.16]]], CASTIGO:[[0,.5,[.06,.07,.06]],[.5001,.8,[.11,.12,.11]],[.8001,.9,[.12,.13,.12]],[.9001,1,[.13,.14,.13]],[1.0001,1.05,[.14,.15,.14]],[1.0501,1.1,[.15,.16,.15]],[1.1001,1.15,[.16,.17,.16]],[1.1501,1.2,[.17,.18,.17]],[1.2001,999,[.18,.19,.18]]] };
+    const routes = ['MENOR A 1 AÑO','MAYOR A 1 AÑO','CUOTA REFINANCIADA/FRACCIONADA'];
+    const money = new Intl.NumberFormat('es-PE',{style:'currency',currency:'PEN',minimumFractionDigits:2});
+    const pct = new Intl.NumberFormat('es-PE',{style:'percent',minimumFractionDigits:2,maximumFractionDigits:2});
+    const monthFmt = new Intl.DateTimeFormat('es-PE',{month:'long',year:'numeric'});
+    const norm = x => String(x ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase();
+    const id = x => String(x ?? '').trim().replace(/\.0+$/,'');
+    function csv(text) { const out=[]; let row=[], cell='', quote=false; for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1]; if(c==='"'&&quote&&n==='"'){cell+='"';i++;} else if(c==='"'){quote=!quote;} else if(c===','&&!quote){row.push(cell);cell='';} else if((c==='\n'||c==='\r')&&!quote){if(c==='\r'&&n==='\n')i++;row.push(cell);out.push(row);row=[];cell='';} else cell+=c;} if(cell||row.length){row.push(cell);out.push(row);} const h=out.shift().map(norm); return out.filter(r=>r.some(Boolean)).map(r=>Object.fromEntries(h.map((k,i)=>[k,r[i]??'']))); }
+    function date(value){ const [d,m,y]=String(value).trim().split(/[\/\-]/).map(Number); return d&&m&&y ? new Date(y,m-1,d) : null; }
+    function key(d){ return d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}` : ''; }
+    function get(row,...names){ for(const name of names){ const v=row[norm(name)]; if(v!==undefined)return v;} return ''; }
+    function amount(v){ return Number(String(v).replace(/,/g,'').replace(/[^0-9.-]/g,''))||0; }
+    async function source(url){ const r=await fetch(`${url}&_=${Date.now()}`); if(!r.ok)throw Error('No se pudo leer una hoja publicada.'); return csv(await r.text()); }
+    function rate(cartera, compliance, route){ const i=routes.indexOf(route); const band=(rates[cartera]||[]).find(x=>compliance>=x[0]&&compliance<=x[1]); return band ? band[2][i] : null; }
+    let state=[];
+    function render(data){
+      state=data.rows;
+      document.querySelector('#period').textContent=monthFmt.format(data.period);
+      document.querySelector('#monthPicker').value=key(data.period);
+      document.querySelector('#rule').textContent=data.userSelected ? 'Se usaron los pagos del mes seleccionado en la columna FECHA.' : data.usedCurrent ? 'Se usaron pagos del mes actual según la columna FECHA.' : 'No hubo pagos este mes; se usó el mes anterior.';
+      const summary=document.querySelector('#summary'); summary.innerHTML='';
+      ['VIGENTE','CASTIGO'].forEach(type=>{ const g=data.groups[type]; const card=document.createElement('article'); card.className='card'; card.innerHTML=`<h2>${type}</h2><div class="amount">${money.format(g.commission)}</div><div class="muted">Comisión estimada</div><table><tr><td>Meta</td><td class="num">${g.meta ? money.format(g.meta) : 'Pendiente'}</td></tr><tr><td>Recaudo</td><td class="num">${money.format(g.total)}</td></tr><tr><td>Cumplimiento</td><td class="num">${g.meta ? pct.format(g.compliance) : '—'}</td></tr><tr><td>Tasa</td><td class="num">${g.rateText || '—'}</td></tr></table>`; summary.append(card); });
+      const total=data.groups.VIGENTE.commission+data.groups.CASTIGO.commission; const totalCard=document.createElement('article'); totalCard.className='card'; totalCard.innerHTML=`<h2>Total</h2><div class="amount">${money.format(total)}</div><div class="muted">Comisión calculada</div><p>${data.rows.length} pago(s) en el período</p>`; summary.append(totalCard);
+      const message=document.querySelector('#message'); const unmatched=data.rows.filter(x=>!x.matched).length; message.innerHTML=unmatched?`<div class="notice error">${unmatched} pago(s) no se encontraron en la matriz vigente y quedaron fuera del cálculo. Revísalos antes de pagar comisión.</div>`:'';
+      const details=document.querySelector('#details'); if(!data.rows.length){details.innerHTML='<p class="empty">No hay pagos para el período seleccionado.</p>';return;} details.innerHTML=`<table><thead><tr><th>Gestor</th><th>ID</th><th class="num">Monto</th><th>Cartera</th><th>Antigüedad</th><th>Ruta</th><th class="num">Cumpl.</th><th class="num">Tasa</th><th class="num">Comisión</th></tr></thead><tbody>${data.rows.map((r,i)=>`<tr><td>${r.gestor}</td><td>${r.client}</td><td class="num">${money.format(r.monto)}</td><td>${r.matched?`<span class="pill ${r.cartera.toLowerCase()}">${r.cartera}</span>`:'SIN CRUCE'}</td><td>${r.antiguedad||'—'}</td><td><select data-index="${i}">${routes.map(x=>`<option ${x===r.route?'selected':''}>${x}</option>`).join('')}</select></td><td class="num">${r.meta ? pct.format(r.compliance) : '—'}</td><td class="num">${r.tasa===null?'—':pct.format(r.tasa)}</td><td class="num">${money.format(r.comision)}</td></tr>`).join('')}</tbody></table>`;
+      details.querySelectorAll('select').forEach(sel=>sel.addEventListener('change',e=>{data.rows[Number(e.target.dataset.index)].route=e.target.value; recalc(data);render(data);}));
+    }
+    function recalc(data){
+      for(const type of ['VIGENTE','CASTIGO']){const g=data.groups[type]; g.total=data.rows.filter(r=>r.cartera===type&&r.matched).reduce((s,r)=>s+r.monto,0);g.compliance=g.meta?g.total/g.meta:0;}
+      data.rows.forEach(r=>{const g=data.groups[r.cartera];r.meta=g?.meta||0;r.compliance=g?.compliance||0;r.tasa=r.matched&&r.meta?rate(r.cartera,r.compliance,r.route):null;r.comision=r.tasa===null?0:r.monto*r.tasa;});
+      for(const type of ['VIGENTE','CASTIGO']){const g=data.groups[type];g.commission=data.rows.filter(r=>r.cartera===type).reduce((s,r)=>s+r.comision,0);const rs=data.rows.filter(r=>r.cartera===type&&r.tasa!==null);g.rateText=rs.length?[...new Set(rs.map(r=>pct.format(r.tasa)))].join(' / '):'';}
+    }
+    async function load(){
+      const button=document.querySelector('#refresh');button.disabled=true;button.textContent='Actualizando…';
+      try { const [payments,metas,matrix]=await Promise.all([source(PAYMENTS),source(METAS),source(MATRIX)]); const now=new Date(); const start=new Date(now.getFullYear(),now.getMonth(),1); const prev=new Date(now.getFullYear(),now.getMonth()-1,1); const requested=document.querySelector('#monthPicker').value; const selected=requested ? new Date(`${requested}-01T00:00:00`) : null; const normalized=payments.map(r=>({...r,_date:date(get(r,'FECHA'))})); let usedCurrent=selected ? normalized.filter(r=>key(r._date)===key(selected)) : normalized.filter(r=>key(r._date)===key(start)); let period=selected||start; if(!selected&&!usedCurrent.length){usedCurrent=normalized.filter(r=>key(r._date)===key(prev));period=prev;} const matrixMap=new Map(matrix.map(r=>[id(get(r,'ID')),r])); const metasMap=new Map(metas.map(r=>[`${key(date(get(r,'MES')))}|${norm(get(r,'TIPO DE CARTERA'))}`,amount(get(r,'META'))])); const rows=usedCurrent.map(r=>{const base=matrixMap.get(id(get(r,'ID CLIENTE')));const modulo=get(base||{},'MODULO');const antiguedad=get(base||{},'ANTIGÜEDAD_JUDICIAL','ANTIGUEDAD JUDICIAL');const cuota=get(r,'NRO DE CUOTA SI TUVIERA CONVENIO');const cartera=(modulo==='141'||modulo==='241')?'CASTIGO':'VIGENTE';return {gestor:get(r,'GESTOR'),client:id(get(r,'ID CLIENTE')),monto:amount(get(r,'MONTO')),matched:!!base,cartera,antiguedad,route:cuota?'CUOTA REFINANCIADA/FRACCIONADA':norm(antiguedad).includes('MENOR')?'MENOR A 1 AÑO':'MAYOR A 1 AÑO',tasa:null,comision:0};}); const groups={};['VIGENTE','CASTIGO'].forEach(type=>groups[type]={meta:metasMap.get(`${key(period)}|${type}`)||0,total:0,compliance:0,commission:0,rateText:''}); const data={period,usedCurrent:!selected&&!!normalized.filter(r=>key(r._date)===key(start)).length,userSelected:!!selected,rows,groups};recalc(data);render(data);
+      } catch(err) {
+        const requested=document.querySelector('#monthPicker').value; const period=requested ? new Date(`${requested}-01T00:00:00`) : new Date(); const fallback={period,userSelected:!!requested,usedCurrent:true,rows:[],groups:{VIGENTE:{meta:0,total:0,compliance:0,commission:0,rateText:''},CASTIGO:{meta:0,total:0,compliance:0,commission:0,rateText:''}}};
+        recalc(fallback); render(fallback);
+        document.querySelector('#message').innerHTML=`<div class="notice error">No se pudo leer una de las hojas publicadas de Drive. Verifica que estén publicadas en la web y pulsa “Actualizar datos” para reintentar.</div>`;
+      }
+      finally {button.disabled=false;button.textContent='Actualizar datos';}
+    }
+    document.querySelector('#refresh').addEventListener('click',load); document.querySelector('#monthPicker').addEventListener('change',load); load();
+  </script>
+</body>
+</html>
