@@ -24,7 +24,11 @@
     .muted { color:#617083; }
     button { appearance:none; border:0; border-radius:9px; background:var(--blue); color:white; padding:11px 16px; font-weight:700; cursor:pointer; }
     button:hover { background:#153c63; }
-    .summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin-bottom:20px; }
+    .summary { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin-bottom:20px; }
+    .summary-overview { grid-column:1/-1; }
+    .overview-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }
+    .overview-label { color:#617083; font-size:12px; font-weight:700; }
+    .overview-value { margin-top:4px; font-size:20px; font-weight:800; }
     .card { padding:18px; }
     .card h2 { margin:0 0 14px; font-size:14px; color:#526478; text-transform:uppercase; letter-spacing:.06em; }
     .amount { font-size:27px; font-weight:800; letter-spacing:-.5px; }
@@ -44,7 +48,7 @@
     .sources { margin-top:20px; font-size:13px; color:#5b6c7d; }
     a { color:#1c5f99; }
     .empty { color:#708093; padding:24px 10px; }
-    @media(max-width:820px) { .summary,.grid { grid-template-columns:1fr; } .toolbar { align-items:flex-start; flex-direction:column; } }
+    @media(max-width:820px) { .summary,.grid { grid-template-columns:1fr; } .overview-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); } .toolbar { align-items:flex-start; flex-direction:column; } }
   </style>
 </head>
 <body>
@@ -144,9 +148,13 @@
       document.querySelector('#monthPicker').value=key(data.period);
       document.querySelector('#rule').textContent=data.userSelected ? 'Se usaron los pagos del mes seleccionado en la columna FECHA.' : data.usedCurrent ? 'Se usaron pagos del mes actual según la columna FECHA.' : 'No hubo pagos este mes; se usó el mes anterior.';
       const summary=document.querySelector('#summary'); summary.innerHTML='';
+      const actualCollection=data.groups.VIGENTE.total+data.groups.CASTIGO.total;
+      const actualCommission=data.groups.VIGENTE.commission+data.groups.CASTIGO.commission;
+      const projectedCollection=actualCollection+(data.projectedCommitmentTotal||0);
+      const overview=document.createElement('article'); overview.className='card summary-overview';
+      overview.innerHTML=`<h2>Resumen de recaudo y comisión</h2><div class="overview-metrics"><div><div class="overview-label">Recaudo actual</div><div class="overview-value">${money.format(actualCollection)}</div></div><div><div class="overview-label">Comisión actual</div><div class="overview-value">${money.format(actualCommission)}</div></div><div><div class="overview-label">Recaudo proyectado</div><div class="overview-value">${money.format(projectedCollection)}</div></div><div><div class="overview-label">Comisión proyectada</div><div class="overview-value">${money.format(data.projectedCommission||0)}</div></div></div>`;
+      summary.append(overview);
       ['VIGENTE','CASTIGO'].forEach(type=>{ const g=data.groups[type]; const card=document.createElement('article'); card.className='card'; card.innerHTML=`<h2>${type}</h2><div class="amount">${money.format(g.commission)}</div><div class="muted">Comisión estimada</div><table><tr><td>Meta</td><td class="num">${g.meta ? money.format(g.meta) : 'Pendiente'}</td></tr><tr><td>Recaudo</td><td class="num">${money.format(g.total)}</td></tr><tr><td>Cumplimiento</td><td class="num">${g.meta ? pct.format(g.compliance) : '—'}</td></tr><tr><td>Tasa</td><td class="num">${g.rateText || '—'}</td></tr></table>`; summary.append(card); });
-      const total=data.groups.VIGENTE.commission+data.groups.CASTIGO.commission; const totalCard=document.createElement('article'); totalCard.className='card'; totalCard.innerHTML=`<h2>Total</h2><div class="amount">${money.format(total)}</div><div class="muted">Comisión calculada</div><p>${data.rows.length} pago(s) en el período</p>`; summary.append(totalCard);
-      if(commitmentFileName){const forecastCard=document.createElement('article');forecastCard.className='card';forecastCard.innerHTML=`<h2>Proyección</h2><div class="amount">${money.format(data.projectedCommitmentTotal||0)}</div><div class="muted">Compromisos cargados</div><p>Recaudo proyectado: ${money.format((data.groups.VIGENTE.total+data.groups.CASTIGO.total)+(data.projectedCommitmentTotal||0))}</p><p>Comisión proyectada: ${money.format(data.projectedCommission||0)}</p>`;summary.append(forecastCard);}
       updateCommitmentStatus(data.period,activeCommitmentsForPeriod(data.period),data.forecastRows||[]);
       const message=document.querySelector('#message'); const unmatched=data.rows.filter(x=>!x.matched).length; const fallback=data.rows.filter(x=>!x.matrixMatch&&x.matched).length; message.innerHTML=unmatched?`<div class="notice error">${unmatched} pago(s) no tienen clasificación ni en la matriz ni en pagos y quedaron fuera del cálculo.</div>`:fallback?`<div class="notice">${fallback} pago(s) no figuran en la matriz actual. Se usó su clasificación y antigüedad registradas en la base de pagos para incluirlos en el recaudo y comisión.</div>`:'';
       renderRanking(data);
