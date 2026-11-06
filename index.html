@@ -16,6 +16,8 @@
     .toolbar { display:flex; align-items:center; gap:18px; justify-content:space-between; padding:18px 20px; margin-bottom:20px; }
     .actions { display:flex; align-items:end; gap:10px; }
     .ranking-actions { display:flex; align-items:end; gap:10px; margin-bottom:14px; }
+    .upload { display:flex; flex-wrap:wrap; align-items:end; gap:12px; }
+    .upload input[type="file"] { max-width:100%; border:1px solid #c5d2df; border-radius:8px; padding:8px; background:#fff; color:#27394c; font:inherit; }
     label { display:grid; gap:4px; font-size:12px; color:#526478; font-weight:700; }
     input[type="month"] { border:1px solid #c5d2df; border-radius:8px; padding:9px; background:#fff; color:#27394c; font:inherit; }
     .period { font-weight:700; font-size:18px; }
@@ -55,6 +57,15 @@
       <div><div class="muted">Período aplicado</div><div class="period" id="period">Cargando…</div><div class="muted" id="rule"></div></div>
       <div class="actions"><label>Mes a calcular<input id="monthPicker" type="month" /></label><button id="refresh">Actualizar datos</button></div>
     </section>
+    <section class="card" style="margin-bottom:20px">
+      <h2>Proyección de compromisos</h2>
+      <div class="upload">
+        <label>Cargar archivo CSV de compromisos<input id="commitmentsFile" type="file" accept=".csv,text/csv" /></label>
+        <button id="clearCommitments" type="button">Quitar archivo</button>
+      </div>
+      <p class="muted" id="commitmentStatus">Carga el CSV para agregar compromisos al recaudo proyectado del mes seleccionado.</p>
+      <p class="muted">La comisión proyectada estima la tasa usando el cumplimiento total previsto de cada cartera; pagos y compromisos se cruzan con la matriz por ID.</p>
+    </section>
     <div id="message"></div>
     <section class="summary" id="summary"></section>
     <section class="card">
@@ -62,8 +73,10 @@
       <div class="ranking-actions">
         <label>Ordenar por
           <select id="rankingSort">
-            <option value="recaudo">Recaudo (mayor a menor)</option>
-            <option value="comision">Comisión (mayor a menor)</option>
+            <option value="recaudo">Recaudo actual (mayor a menor)</option>
+            <option value="comision">Comisión actual (mayor a menor)</option>
+            <option value="recaudoProyectado">Recaudo proyectado (mayor a menor)</option>
+            <option value="comisionProyectada">Comisión proyectada (mayor a menor)</option>
           </select>
         </label>
         <button id="downloadDetails" type="button">Descargar detalle para Excel</button>
@@ -88,45 +101,75 @@
     const money = new Intl.NumberFormat('es-PE',{style:'currency',currency:'PEN',minimumFractionDigits:2});
     const pct = new Intl.NumberFormat('es-PE',{style:'percent',minimumFractionDigits:2,maximumFractionDigits:2});
     const monthFmt = new Intl.DateTimeFormat('es-PE',{month:'long',year:'numeric'});
-    const norm = x => String(x ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase();
+    const norm = x => String(x ?? '').replace(/^\uFEFF/,'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase();
     const id = x => String(x ?? '').trim().replace(/\.0+$/,'');
+    const advisorKey = x => { const value=norm(x).replace(/[^A-Z0-9]/g,''); return value==='KPAQUILLAU'?'KPAQUILLAURI':value; };
     const html = x => String(x ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    function csv(text) { const out=[]; let row=[], cell='', quote=false; for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1]; if(c==='"'&&quote&&n==='"'){cell+='"';i++;} else if(c==='"'){quote=!quote;} else if(c===','&&!quote){row.push(cell);cell='';} else if((c==='\n'||c==='\r')&&!quote){if(c==='\r'&&n==='\n')i++;row.push(cell);out.push(row);row=[];cell='';} else cell+=c;} if(cell||row.length){row.push(cell);out.push(row);} const h=out.shift().map(norm); return out.filter(r=>r.some(Boolean)).map(r=>Object.fromEntries(h.map((k,i)=>[k,r[i]??'']))); }
-    function date(value){ const [d,m,y]=String(value).trim().split(/[\/\-]/).map(Number); return d&&m&&y ? new Date(y,m-1,d) : null; }
+    function csvRows(text) { const out=[]; let row=[], cell='', quote=false; for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1]; if(c==='"'&&quote&&n==='"'){cell+='"';i++;} else if(c==='"'){quote=!quote;} else if(c===','&&!quote){row.push(cell);cell='';} else if((c==='\n'||c==='\r')&&!quote){if(c==='\r'&&n==='\n')i++;row.push(cell);out.push(row);row=[];cell='';} else cell+=c;} if(cell||row.length){row.push(cell);out.push(row);} return out.filter(r=>r.some(Boolean)); }
+    function csv(text) { const out=csvRows(text); const h=out.shift().map(norm); return out.map(r=>Object.fromEntries(h.map((k,i)=>[k,r[i]??'']))); }
+    function csvObjects(text, requiredHeaders) { const rows=csvRows(text); const headerIndex=rows.findIndex(row=>{const headers=row.map(norm);return requiredHeaders.every(name=>headers.includes(name));}); if(headerIndex<0)throw Error(`El CSV no contiene los encabezados requeridos: ${requiredHeaders.join(', ')}.`); const headers=rows[headerIndex].map(norm); return rows.slice(headerIndex+1).map(row=>Object.fromEntries(headers.map((name,index)=>[name,row[index]??'']))); }
+    function date(value){ const text=String(value??'').trim(); const iso=text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); if(iso)return new Date(Number(iso[1]),Number(iso[2])-1,Number(iso[3])); const parts=text.split(/[\/\-]/).map(Number); const [d,m,y]=parts; return d&&m&&y ? new Date(y,m-1,d) : null; }
     function key(d){ return d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}` : ''; }
     function get(row,...names){ for(const name of names){ const v=row[norm(name)]; if(v!==undefined)return v;} return ''; }
     function amount(v){ return Number(String(v).replace(/,/g,'').replace(/[^0-9.-]/g,''))||0; }
     async function source(url){ const r=await fetch(`${url}&_=${Date.now()}`); if(!r.ok)throw Error('No se pudo leer una hoja publicada.'); return csv(await r.text()); }
     function rate(cartera, compliance, route){ const i=routes.indexOf(route); const band=(rates[cartera]||[]).find(x=>compliance>=x[0]&&compliance<=x[1]); return band ? band[2][i] : null; }
-    let state=[], currentPeriod, currentAdvisorMetas=[];
+    function activeCommitmentsForPeriod(period){return commitmentRecords.filter(row=>key(date(get(row,'FECHAPAGO')))==key(period)&&(!get(row,'ESTADOCOMPROMISO')||['VIGENTE','ACTIVO'].includes(norm(get(row,'ESTADOCOMPROMISO')))));}
+    function updateCommitmentStatus(period, rows, forecastRows=[]){
+      const status=document.querySelector('#commitmentStatus');
+      if(!commitmentFileName){status.textContent='Carga el CSV para agregar compromisos al recaudo proyectado del mes seleccionado.';return;}
+      const total=rows.reduce((sum,row)=>sum+amount(get(row,'TOTALENSOLES','MONTOPAGADO')),0);
+      const unmatched=forecastRows.filter(row=>!row.matrixMatch).length;
+      const warning=unmatched?` ${unmatched} compromiso(s) no cruzan con la matriz: se incluyen en recaudo y efectividad, no en comisión proyectada.`:'';
+      status.textContent=`${commitmentFileName}: ${rows.length} compromiso(s) vigente(s) para ${monthFmt.format(period)} por ${money.format(total)}.${warning}`;
+    }
+    async function loadCommitments(file){
+      const bytes=await file.arrayBuffer();
+      let text;
+      try{text=new TextDecoder('utf-8',{fatal:true}).decode(bytes);}catch{text=new TextDecoder('windows-1252').decode(bytes);}
+      const records=csvObjects(text,['IDDEUDOR','FECHAPAGO','TOTALENSOLES','GESTORGEST']);
+      if(!records.length)throw Error('El archivo no contiene filas de compromisos.');
+      commitmentRecords=records;
+      commitmentFileName=file.name;
+      await load();
+    }
+    let state=[], currentPeriod, currentData, currentAdvisorMetas=[], currentForecastRows=[], commitmentRecords=[], commitmentFileName='';
     function render(data){
       state=data.rows;
       currentPeriod=data.period;
+      currentData=data;
       currentAdvisorMetas=data.advisorMetas||[];
+      currentForecastRows=data.forecastRows||[];
       document.querySelector('#period').textContent=monthFmt.format(data.period);
       document.querySelector('#monthPicker').value=key(data.period);
       document.querySelector('#rule').textContent=data.userSelected ? 'Se usaron los pagos del mes seleccionado en la columna FECHA.' : data.usedCurrent ? 'Se usaron pagos del mes actual según la columna FECHA.' : 'No hubo pagos este mes; se usó el mes anterior.';
       const summary=document.querySelector('#summary'); summary.innerHTML='';
       ['VIGENTE','CASTIGO'].forEach(type=>{ const g=data.groups[type]; const card=document.createElement('article'); card.className='card'; card.innerHTML=`<h2>${type}</h2><div class="amount">${money.format(g.commission)}</div><div class="muted">Comisión estimada</div><table><tr><td>Meta</td><td class="num">${g.meta ? money.format(g.meta) : 'Pendiente'}</td></tr><tr><td>Recaudo</td><td class="num">${money.format(g.total)}</td></tr><tr><td>Cumplimiento</td><td class="num">${g.meta ? pct.format(g.compliance) : '—'}</td></tr><tr><td>Tasa</td><td class="num">${g.rateText || '—'}</td></tr></table>`; summary.append(card); });
       const total=data.groups.VIGENTE.commission+data.groups.CASTIGO.commission; const totalCard=document.createElement('article'); totalCard.className='card'; totalCard.innerHTML=`<h2>Total</h2><div class="amount">${money.format(total)}</div><div class="muted">Comisión calculada</div><p>${data.rows.length} pago(s) en el período</p>`; summary.append(totalCard);
+      if(commitmentFileName){const forecastCard=document.createElement('article');forecastCard.className='card';forecastCard.innerHTML=`<h2>Proyección</h2><div class="amount">${money.format(data.projectedCommitmentTotal||0)}</div><div class="muted">Compromisos cargados</div><p>Recaudo proyectado: ${money.format((data.groups.VIGENTE.total+data.groups.CASTIGO.total)+(data.projectedCommitmentTotal||0))}</p><p>Comisión proyectada: ${money.format(data.projectedCommission||0)}</p>`;summary.append(forecastCard);}
+      updateCommitmentStatus(data.period,activeCommitmentsForPeriod(data.period),data.forecastRows||[]);
       const message=document.querySelector('#message'); const unmatched=data.rows.filter(x=>!x.matched).length; const fallback=data.rows.filter(x=>!x.matrixMatch&&x.matched).length; message.innerHTML=unmatched?`<div class="notice error">${unmatched} pago(s) no tienen clasificación ni en la matriz ni en pagos y quedaron fuera del cálculo.</div>`:fallback?`<div class="notice">${fallback} pago(s) no figuran en la matriz actual. Se usó su clasificación y antigüedad registradas en la base de pagos para incluirlos en el recaudo y comisión.</div>`:'';
       renderRanking(data);
     }
     function renderRanking(data){
       const byAdvisor=new Map();
       const metaAdvisors=new Set();
-      const addAdvisor=(name)=>{const label=String(name??'').trim();const advisorKey=norm(label);if(!advisorKey)return null;if(!byAdvisor.has(advisorKey))byAdvisor.set(advisorKey,{gestor:label,meta:0,recaudo:0,comision:0});return byAdvisor.get(advisorKey);};
-      (data.advisorMetas||[]).forEach(row=>{const name=get(row,'GESTOR');const advisor=addAdvisor(name);if(advisor){metaAdvisors.add(norm(name));advisor.meta+=amount(get(row,'META'));}});
-      const otherPayments={recaudo:0,comision:0,pagos:0};
-      data.rows.forEach(row=>{if(metaAdvisors.has(norm(row.gestor))){const advisor=addAdvisor(row.gestor);if(advisor){advisor.recaudo+=row.monto;advisor.comision+=row.comision;}}else{otherPayments.recaudo+=row.monto;otherPayments.comision+=row.comision;otherPayments.pagos+=1;}});
+      const addAdvisor=(name)=>{const label=String(name??'').trim();const key=advisorKey(label);if(!key)return null;if(!byAdvisor.has(key))byAdvisor.set(key,{gestor:label,meta:0,recaudo:0,comision:0,compromisos:0,recaudoProyectado:0,comisionProyectada:0});return byAdvisor.get(key);};
+      (data.advisorMetas||[]).forEach(row=>{const name=get(row,'GESTOR');const advisor=addAdvisor(name);if(advisor){metaAdvisors.add(advisorKey(name));advisor.meta+=amount(get(row,'META'));}});
+      const otherPayments={recaudo:0,comision:0,compromisos:0,comisionProyectada:0,pagos:0};
+      data.rows.forEach(row=>{const key=advisorKey(row.gestor);const advisor=metaAdvisors.has(key)?addAdvisor(row.gestor):null;if(row.matched){if(advisor){advisor.recaudo+=row.monto;advisor.comision+=row.comision;advisor.comisionProyectada+=row.comisionProyectada||0;}else{otherPayments.recaudo+=row.monto;otherPayments.comision+=row.comision;otherPayments.comisionProyectada+=row.comisionProyectada||0;otherPayments.pagos+=1;}}});
+      (data.forecastRows||[]).forEach(row=>{const key=advisorKey(row.gestor);const advisor=metaAdvisors.has(key)?addAdvisor(row.gestor):null;if(advisor){advisor.compromisos+=row.monto;advisor.comisionProyectada+=row.comisionProyectada||0;}else{otherPayments.compromisos+=row.monto;otherPayments.comisionProyectada+=row.comisionProyectada||0;}});
+      byAdvisor.forEach(advisor=>{advisor.recaudoProyectado=advisor.recaudo+advisor.compromisos;advisor.efectividad=advisor.meta?advisor.recaudo/advisor.meta:null;advisor.efectividadProyectada=advisor.meta?advisor.recaudoProyectado/advisor.meta:null;});
+      otherPayments.recaudoProyectado=otherPayments.recaudo+otherPayments.compromisos;
       const sortBy=document.querySelector('#rankingSort').value;
-      const ranking=[...byAdvisor.values()].map(row=>({...row,efectividad:row.meta?row.recaudo/row.meta:null})).sort((a,b)=>b[sortBy]-a[sortBy]||a.gestor.localeCompare(b.gestor,'es'));
+      const ranking=[...byAdvisor.values()].sort((a,b)=>b[sortBy]-a[sortBy]||a.gestor.localeCompare(b.gestor,'es'));
       const target=document.querySelector('#ranking');
-      const teams={JUDICIAL:{recaudo:0,comision:0,pagos:0},EXTRAJUDICIAL:{recaudo:0,comision:0,pagos:0}};
-      data.rows.forEach(row=>{const team=norm(row.gestor)==='KPAQUILLAURI'?'JUDICIAL':'EXTRAJUDICIAL';teams[team].recaudo+=row.monto;teams[team].comision+=row.comision;teams[team].pagos+=1;});
-      document.querySelector('#paymentTypes').innerHTML=`<table><thead><tr><th>Tipo</th><th class="num">Pagos</th><th class="num">Recaudo</th><th class="num">Comisión</th></tr></thead><tbody>${Object.entries(teams).map(([name,values])=>`<tr><td>${name}</td><td class="num">${values.pagos}</td><td class="num">${money.format(values.recaudo)}</td><td class="num">${money.format(values.comision)}</td></tr>`).join('')}</tbody></table>`;
-      target.innerHTML=ranking.length?`<table><thead><tr><th>#</th><th>Asesor</th><th class="num">Meta</th><th class="num">Recaudo</th><th class="num">Efectividad</th><th class="num">Comisión</th></tr></thead><tbody>${ranking.map((row,index)=>`<tr><td>${index+1}</td><td>${html(row.gestor)}</td><td class="num">${row.meta?money.format(row.meta):'Sin meta'}</td><td class="num">${money.format(row.recaudo)}</td><td class="num">${row.efectividad===null?'—':pct.format(row.efectividad)}</td><td class="num">${money.format(row.comision)}</td></tr>`).join('')}</tbody></table>`:'<p class="empty">No hay asesores con meta para el período seleccionado.</p>';
-      document.querySelector('#otherLegend').textContent=otherPayments.pagos?`Leyenda: ${otherPayments.pagos} pagos de asesores que no figuran en META se agrupan como OTROS y no forman parte del ranking. Recaudo: ${money.format(otherPayments.recaudo)} · Comisión: ${money.format(otherPayments.comision)}.`:'Leyenda: OTROS agrupa pagos de asesores que no figuran en META del mes y no forma parte del ranking.';
+      const teams={JUDICIAL:{recaudo:0,comision:0,comisionProyectada:0,compromisos:0,pagos:0},EXTRAJUDICIAL:{recaudo:0,comision:0,comisionProyectada:0,compromisos:0,pagos:0}};
+      data.rows.forEach(row=>{const team=advisorKey(row.gestor)==='KPAQUILLAURI'?'JUDICIAL':'EXTRAJUDICIAL';teams[team].recaudo+=row.monto;teams[team].comision+=row.comision;teams[team].comisionProyectada+=row.comisionProyectada||0;teams[team].pagos+=1;});
+      (data.forecastRows||[]).forEach(row=>{const team=advisorKey(row.gestor)==='KPAQUILLAURI'?'JUDICIAL':'EXTRAJUDICIAL';teams[team].compromisos+=row.monto;teams[team].comisionProyectada+=row.comisionProyectada||0;});
+      document.querySelector('#paymentTypes').innerHTML=`<table><thead><tr><th>Tipo</th><th class="num">Pagos actuales</th><th class="num">Recaudo actual</th><th class="num">Compromisos</th><th class="num">Recaudo proyectado</th><th class="num">Comisión actual</th><th class="num">Comisión proyectada</th></tr></thead><tbody>${Object.entries(teams).map(([name,values])=>`<tr><td>${name}</td><td class="num">${values.pagos}</td><td class="num">${money.format(values.recaudo)}</td><td class="num">${money.format(values.compromisos)}</td><td class="num">${money.format(values.recaudo+values.compromisos)}</td><td class="num">${money.format(values.comision)}</td><td class="num">${money.format(values.comisionProyectada)}</td></tr>`).join('')}</tbody></table>`;
+      target.innerHTML=ranking.length?`<table><thead><tr><th>#</th><th>Asesor</th><th class="num">Meta</th><th class="num">Recaudo actual</th><th class="num">Comisión actual</th><th class="num">Compromisos</th><th class="num">Recaudo proyectado</th><th class="num">Efectividad actual</th><th class="num">Efectividad proyectada</th><th class="num">Comisión proyectada</th></tr></thead><tbody>${ranking.map((row,index)=>`<tr><td>${index+1}</td><td>${html(row.gestor)}</td><td class="num">${row.meta?money.format(row.meta):'Sin meta'}</td><td class="num">${money.format(row.recaudo)}</td><td class="num">${money.format(row.comision)}</td><td class="num">${money.format(row.compromisos)}</td><td class="num">${money.format(row.recaudoProyectado)}</td><td class="num">${row.efectividad===null?'—':pct.format(row.efectividad)}</td><td class="num">${row.efectividadProyectada===null?'—':pct.format(row.efectividadProyectada)}</td><td class="num">${money.format(row.comisionProyectada)}</td></tr>`).join('')}</tbody></table>`:'<p class="empty">No hay asesores con meta para el período seleccionado.</p>';
+      document.querySelector('#otherLegend').textContent=otherPayments.pagos||otherPayments.compromisos?`Leyenda: ${otherPayments.pagos} pago(s) y ${money.format(otherPayments.compromisos)} en compromisos de asesores que no figuran en META se agrupan como OTROS, fuera del ranking. Recaudo actual: ${money.format(otherPayments.recaudo)} · Recaudo proyectado: ${money.format(otherPayments.recaudoProyectado)} · Comisión actual: ${money.format(otherPayments.comision)} · Comisión proyectada: ${money.format(otherPayments.comisionProyectada)}.`:'Leyenda: OTROS agrupa pagos y compromisos de asesores que no figuran en META del mes; no forma parte del ranking.';
     }
     function csvCell(value){
       let text=String(value??'');
@@ -135,9 +178,10 @@
       return `"${text.replace(/"/g,'""')}"`;
     }
     function downloadDetails(){
-      const headers=['Fecha','Asesor','Grupo ranking','Equipo','ID cliente','Nro operación','Monto','Cartera','Antigüedad judicial','Ruta comisión','Cumplimiento cartera','Tasa','Comisión','Cruce con matriz'];
-      const metaAdvisorKeys=new Set(currentAdvisorMetas.map(row=>norm(get(row,'GESTOR'))));
-      const rows=state.map(row=>[row.fecha,row.gestor,metaAdvisorKeys.has(norm(row.gestor))?row.gestor:'OTROS',norm(row.gestor)==='KPAQUILLAURI'?'JUDICIAL':'EXTRAJUDICIAL',row.client,row.operacion,row.monto,row.cartera,row.antiguedad,row.route,pct.format(row.compliance),row.tasa===null?'':pct.format(row.tasa),row.comision,row.matrixMatch?'SI':'NO']);
+      const headers=['Tipo de registro','Fecha','Asesor','Grupo ranking','Equipo','ID cliente','Nro operación','Monto','Cartera','Antigüedad judicial','Ruta comisión','Cumplimiento cartera','Tasa','Comisión actual','Comisión proyectada','Cruce con matriz'];
+      const metaAdvisorKeys=new Set(currentAdvisorMetas.map(row=>advisorKey(get(row,'GESTOR'))));
+      const rows=state.map(row=>['ACTUAL',row.fecha,row.gestor,metaAdvisorKeys.has(advisorKey(row.gestor))?row.gestor:'OTROS',advisorKey(row.gestor)==='KPAQUILLAURI'?'JUDICIAL':'EXTRAJUDICIAL',row.client,row.operacion,row.monto,row.cartera,row.antiguedad,row.route,pct.format(row.compliance),row.tasa===null?'':pct.format(row.tasa),row.comision,row.comisionProyectada||0,row.matrixMatch?'SI':'NO']);
+      currentForecastRows.forEach(row=>rows.push(['PROYECCIÓN',row.fechaPago,row.gestor,metaAdvisorKeys.has(advisorKey(row.gestor))?row.gestor:'OTROS',advisorKey(row.gestor)==='KPAQUILLAURI'?'JUDICIAL':'EXTRAJUDICIAL',row.client,row.operacion,row.monto,row.cartera||'SIN CRUCE',row.antiguedad||'',row.route||'',row.compliance===undefined?'':pct.format(row.compliance),row.tasa===null?'':pct.format(row.tasa),0,row.comisionProyectada||0,row.matrixMatch?'SI':'NO']));
       const content='\uFEFF'+[headers,...rows].map(row=>row.map(csvCell).join(';')).join('\r\n');
       const link=document.createElement('a');
       const url=URL.createObjectURL(new Blob([content],{type:'text/csv;charset=utf-8'}));
@@ -150,18 +194,78 @@
       for(const type of ['VIGENTE','CASTIGO']){const g=data.groups[type]; g.total=data.rows.filter(r=>r.cartera===type&&r.matched).reduce((s,r)=>s+r.monto,0);g.compliance=g.meta?g.total/g.meta:0;}
       data.rows.forEach(r=>{const g=data.groups[r.cartera];r.meta=g?.meta||0;r.compliance=g?.compliance||0;r.tasa=r.matched&&r.meta?rate(r.cartera,r.compliance,r.route):null;r.comision=r.tasa===null?0:r.monto*r.tasa;});
       for(const type of ['VIGENTE','CASTIGO']){const g=data.groups[type];g.commission=data.rows.filter(r=>r.cartera===type).reduce((s,r)=>s+r.comision,0);const rs=data.rows.filter(r=>r.cartera===type&&r.tasa!==null);g.rateText=rs.length?[...new Set(rs.map(r=>pct.format(r.tasa)))].join(' / '):'';}
+      const projectedByType={VIGENTE:0,CASTIGO:0};
+      data.forecastRows.forEach(row=>{if(row.matched)projectedByType[row.cartera]+=row.monto;});
+      const projectedCompliance={};
+      for(const type of ['VIGENTE','CASTIGO']){const group=data.groups[type];projectedCompliance[type]=group.meta?(group.total+projectedByType[type])/group.meta:0;}
+      const projectedRate=row=>row.matched&&data.groups[row.cartera]?.meta?rate(row.cartera,projectedCompliance[row.cartera],row.route):null;
+      data.rows.forEach(row=>{row.comisionProyectada=(projectedRate(row)??0)*row.monto;});
+      data.forecastRows.forEach(row=>{row.compliance=projectedCompliance[row.cartera]||0;row.tasa=projectedRate(row);row.comisionProyectada=(row.tasa??0)*row.monto;});
+      data.projectedCommitmentTotal=data.forecastRows.reduce((sum,row)=>sum+row.monto,0);
+      data.projectedCommission=data.rows.reduce((sum,row)=>sum+row.comisionProyectada,0)+data.forecastRows.reduce((sum,row)=>sum+row.comisionProyectada,0);
     }
     async function load(){
       const button=document.querySelector('#refresh');button.disabled=true;button.textContent='Actualizando…';
-      try { const [payments,metas,matrix,advisorMetas]=await Promise.all([source(PAYMENTS),source(METAS),source(MATRIX),source(ADVISOR_METAS)]); const now=new Date(); const start=new Date(now.getFullYear(),now.getMonth(),1); const prev=new Date(now.getFullYear(),now.getMonth()-1,1); const requested=document.querySelector('#monthPicker').value; const selected=requested ? new Date(`${requested}-01T00:00:00`) : null; const normalized=payments.map(r=>({...r,_date:date(get(r,'FECHA'))})); let usedCurrent=selected ? normalized.filter(r=>key(r._date)===key(selected)) : normalized.filter(r=>key(r._date)===key(start)); let period=selected||start; if(!selected&&!usedCurrent.length){usedCurrent=normalized.filter(r=>key(r._date)===key(prev));period=prev;} const matrixMap=new Map(matrix.map(r=>[id(get(r,'ID')),r])); const metasMap=new Map(metas.map(r=>[`${key(date(get(r,'MES')))}|${norm(get(r,'TIPO DE CARTERA'))}`,amount(get(r,'META'))])); const rows=usedCurrent.map(r=>{const base=matrixMap.get(id(get(r,'ID CLIENTE')));const paymentClass=norm(get(r,'CASTIGO/VIGENTE'));const hasPaymentClass=paymentClass.includes('CASTIG')||paymentClass.includes('VIGENTE');const modulo=get(base||{},'MODULO');const antiguedad=base?get(base,'ANTIGÜEDAD_JUDICIAL','ANTIGUEDAD JUDICIAL'):get(r,'ANTIGUEDAD');const cuota=get(r,'NRO DE CUOTA SI TUVIERA CONVENIO');const cartera=base?(modulo==='141'||modulo==='241'?'CASTIGO':'VIGENTE'):(paymentClass.includes('CASTIG')?'CASTIGO':'VIGENTE');return {gestor:get(r,'GESTOR'),client:id(get(r,'ID CLIENTE')),operacion:get(r,'NRO OPERACION'),fecha:get(r,'FECHA'),monto:amount(get(r,'MONTO')),matched:!!base||hasPaymentClass,matrixMatch:!!base,cartera,antiguedad,route:cuota?'CUOTA REFINANCIADA/FRACCIONADA':norm(antiguedad).includes('MENOR')?'MENOR A 1 AÑO':'MAYOR A 1 AÑO',tasa:null,comision:0};}); const groups={};['VIGENTE','CASTIGO'].forEach(type=>groups[type]={meta:metasMap.get(`${key(period)}|${type}`)||0,total:0,compliance:0,commission:0,rateText:''}); const data={period,usedCurrent:!selected&&!!normalized.filter(r=>key(r._date)===key(start)).length,userSelected:!!selected,rows,groups,advisorMetas:advisorMetas.filter(r=>key(date(get(r,'FECHA')))===key(period))};recalc(data);render(data);
+      try {
+        const [payments,metas,matrix,advisorMetas]=await Promise.all([source(PAYMENTS),source(METAS),source(MATRIX),source(ADVISOR_METAS)]);
+        const now=new Date();
+        const start=new Date(now.getFullYear(),now.getMonth(),1);
+        const prev=new Date(now.getFullYear(),now.getMonth()-1,1);
+        const requested=document.querySelector('#monthPicker').value;
+        const selected=requested ? new Date(`${requested}-01T00:00:00`) : null;
+        const normalized=payments.map(row=>({...row,_date:date(get(row,'FECHA'))}));
+        let usedCurrent=selected ? normalized.filter(row=>key(row._date)===key(selected)) : normalized.filter(row=>key(row._date)===key(start));
+        let period=selected||start;
+        if(!selected&&!usedCurrent.length){usedCurrent=normalized.filter(row=>key(row._date)===key(prev));period=prev;}
+        const matrixMap=new Map(matrix.map(row=>[id(get(row,'ID')),row]));
+        const metasMap=new Map(metas.map(row=>[`${key(date(get(row,'MES')))}|${norm(get(row,'TIPO DE CARTERA'))}`,amount(get(row,'META'))]));
+        const rows=usedCurrent.map(row=>{
+          const base=matrixMap.get(id(get(row,'ID CLIENTE')));
+          const paymentClass=norm(get(row,'CASTIGO/VIGENTE'));
+          const hasPaymentClass=paymentClass.includes('CASTIG')||paymentClass.includes('VIGENTE');
+          const modulo=get(base||{},'MODULO');
+          const antiguedad=base?get(base,'ANTIGÜEDAD_JUDICIAL','ANTIGUEDAD JUDICIAL'):get(row,'ANTIGUEDAD');
+          const cuota=get(row,'NRO DE CUOTA SI TUVIERA CONVENIO');
+          const cartera=base?(modulo==='141'||modulo==='241'?'CASTIGO':'VIGENTE'):(paymentClass.includes('CASTIG')?'CASTIGO':'VIGENTE');
+          return {gestor:get(row,'GESTOR'),client:id(get(row,'ID CLIENTE')),operacion:get(row,'NRO OPERACION'),fecha:get(row,'FECHA'),monto:amount(get(row,'MONTO')),matched:!!base||hasPaymentClass,matrixMatch:!!base,cartera,antiguedad,route:cuota?'CUOTA REFINANCIADA/FRACCIONADA':norm(antiguedad).includes('MENOR')?'MENOR A 1 AÑO':'MAYOR A 1 AÑO',tasa:null,comision:0};
+        });
+        const forecastRows=activeCommitmentsForPeriod(period).map(row=>{
+          const client=id(get(row,'IDDEUDOR'));
+          const base=matrixMap.get(client);
+          const modulo=get(base||{},'MODULO');
+          const antiguedad=base?get(base,'ANTIGÜEDAD_JUDICIAL','ANTIGUEDAD JUDICIAL'):'';
+          const cuota=get(row,'NROCUOTA');
+          return {gestor:get(row,'GESTORGEST'),client,operacion:get(row,'IDDEUDA'),fechaPago:get(row,'FECHAPAGO'),monto:amount(get(row,'TOTALENSOLES','MONTOPAGADO')),matched:!!base,matrixMatch:!!base,cartera:base?(modulo==='141'||modulo==='241'?'CASTIGO':'VIGENTE'):'',antiguedad,route:cuota&&Number(cuota)>0?'CUOTA REFINANCIADA/FRACCIONADA':norm(antiguedad).includes('MENOR')?'MENOR A 1 AÑO':'MAYOR A 1 AÑO',tasa:null,comisionProyectada:0};
+        });
+        const groups={};
+        ['VIGENTE','CASTIGO'].forEach(type=>groups[type]={meta:metasMap.get(`${key(period)}|${type}`)||0,total:0,compliance:0,commission:0,rateText:''});
+        const data={period,usedCurrent:!selected&&!!normalized.filter(row=>key(row._date)===key(start)).length,userSelected:!!selected,rows,forecastRows,groups,advisorMetas:advisorMetas.filter(row=>key(date(get(row,'FECHA')))==key(period))};
+        recalc(data);
+        render(data);
       } catch(err) {
-        const requested=document.querySelector('#monthPicker').value; const period=requested ? new Date(`${requested}-01T00:00:00`) : new Date(); const fallback={period,userSelected:!!requested,usedCurrent:true,rows:[],groups:{VIGENTE:{meta:0,total:0,compliance:0,commission:0,rateText:''},CASTIGO:{meta:0,total:0,compliance:0,commission:0,rateText:''}}};
+        console.error(err);
+        const requested=document.querySelector('#monthPicker').value; const period=requested ? new Date(`${requested}-01T00:00:00`) : new Date(); const fallback={period,userSelected:!!requested,usedCurrent:true,rows:[],forecastRows:[],groups:{VIGENTE:{meta:0,total:0,compliance:0,commission:0,rateText:''},CASTIGO:{meta:0,total:0,compliance:0,commission:0,rateText:''}}};
         recalc(fallback); render(fallback);
         document.querySelector('#message').innerHTML=`<div class="notice error">No se pudo leer una de las hojas publicadas de Drive. Verifica que estén publicadas en la web y pulsa “Actualizar datos” para reintentar.</div>`;
       }
       finally {button.disabled=false;button.textContent='Actualizar datos';}
     }
-    document.querySelector('#refresh').addEventListener('click',load); document.querySelector('#monthPicker').addEventListener('change',load); document.querySelector('#rankingSort').addEventListener('change',()=>renderRanking({rows:state,advisorMetas:currentAdvisorMetas})); document.querySelector('#downloadDetails').addEventListener('click',downloadDetails); load();
+    document.querySelector('#refresh').addEventListener('click',load);
+    document.querySelector('#monthPicker').addEventListener('change',load);
+    document.querySelector('#rankingSort').addEventListener('change',()=>currentData&&renderRanking(currentData));
+    document.querySelector('#downloadDetails').addEventListener('click',downloadDetails);
+    document.querySelector('#commitmentsFile').addEventListener('change',async event=>{
+      const file=event.target.files?.[0];
+      if(!file)return;
+      try{await loadCommitments(file);}catch(error){console.error(error);document.querySelector('#commitmentStatus').textContent=`No se pudo cargar el archivo: ${error.message}`;}
+    });
+    document.querySelector('#clearCommitments').addEventListener('click',()=>{
+      commitmentRecords=[];
+      commitmentFileName='';
+      document.querySelector('#commitmentsFile').value='';
+      if(currentData){currentData.forecastRows=[];recalc(currentData);render(currentData);}else updateCommitmentStatus(new Date(),[]);
+    });
+    load();
   </script>
 </body>
 </html>
