@@ -69,6 +69,11 @@
         <button id="downloadDetails" type="button">Descargar detalle para Excel</button>
       </div>
       <div class="table-wrap" id="ranking"></div>
+      <p class="muted" id="otherLegend"></p>
+    </section>
+    <section class="card" style="margin-top:20px">
+      <h2>Recaudo por equipo</h2>
+      <div class="table-wrap" id="paymentTypes"></div>
     </section>
     <aside class="card" style="margin-top:20px"><h2>Reglas aplicadas</h2><p>Los pagos se cruzan por ID CLIENTE con ID de la matriz. Los módulos 141 y 241 se clasifican como castigo; los demás, como vigente.</p><p>La tasa de comisión se determina por el cumplimiento global de cada cartera y la antigüedad judicial.</p></aside>
     <p class="sources">Fuentes: <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_8rxBU1DfWqyQMTgDon2CISw65lbLV3cJy5GIwPmrLUlaztZ8t1yF5KQCXOj3AXkpWTH-m9PVNjkz/pubhtml" target="_blank" rel="noreferrer">base de pagos y metas</a> · <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vST45TEkt8-r1yK85rIqJO9joI4nKbOzgdJb3C7zUkWNwI1ZWYd4P75c54ReN4EWU7MBf_v8z-Ln5_C/pubhtml" target="_blank" rel="noreferrer">matriz judicial</a>.</p>
@@ -109,14 +114,19 @@
     }
     function renderRanking(data){
       const byAdvisor=new Map();
-      const addAdvisor=(name)=>{const label=String(name??'').trim();const key=norm(label);if(!key)return null;if(!byAdvisor.has(key))byAdvisor.set(key,{gestor:label,meta:0,recaudo:0,comision:0});return byAdvisor.get(key);};
-      (data.advisorMetas||[]).forEach(row=>{const advisor=addAdvisor(get(row,'GESTOR'));if(advisor)advisor.meta+=amount(get(row,'META'));});
-      data.rows.forEach(row=>{const advisor=addAdvisor(row.gestor);if(advisor&&row.matched){advisor.recaudo+=row.monto;advisor.comision+=row.comision;}});
+      const metaAdvisors=new Set();
+      const addAdvisor=(name)=>{const label=String(name??'').trim();const advisorKey=norm(label);if(!advisorKey)return null;if(!byAdvisor.has(advisorKey))byAdvisor.set(advisorKey,{gestor:label,meta:0,recaudo:0,comision:0});return byAdvisor.get(advisorKey);};
+      (data.advisorMetas||[]).forEach(row=>{const name=get(row,'GESTOR');const advisor=addAdvisor(name);if(advisor){metaAdvisors.add(norm(name));advisor.meta+=amount(get(row,'META'));}});
+      const otherPayments={recaudo:0,comision:0,pagos:0};
+      data.rows.forEach(row=>{if(metaAdvisors.has(norm(row.gestor))){const advisor=addAdvisor(row.gestor);if(advisor){advisor.recaudo+=row.monto;advisor.comision+=row.comision;}}else{otherPayments.recaudo+=row.monto;otherPayments.comision+=row.comision;otherPayments.pagos+=1;}});
       const sortBy=document.querySelector('#rankingSort').value;
       const ranking=[...byAdvisor.values()].map(row=>({...row,efectividad:row.meta?row.recaudo/row.meta:null})).sort((a,b)=>b[sortBy]-a[sortBy]||a.gestor.localeCompare(b.gestor,'es'));
       const target=document.querySelector('#ranking');
-      if(!ranking.length){target.innerHTML='<p class="empty">No hay metas ni pagos para el período seleccionado.</p>';return;}
-      target.innerHTML=`<table><thead><tr><th>#</th><th>Asesor</th><th class="num">Meta</th><th class="num">Recaudo</th><th class="num">Efectividad</th><th class="num">Comisión</th></tr></thead><tbody>${ranking.map((row,index)=>`<tr><td>${index+1}</td><td>${html(row.gestor)}</td><td class="num">${row.meta?money.format(row.meta):'Sin meta'}</td><td class="num">${money.format(row.recaudo)}</td><td class="num">${row.efectividad===null?'—':pct.format(row.efectividad)}</td><td class="num">${money.format(row.comision)}</td></tr>`).join('')}</tbody></table>`;
+      const teams={JUDICIAL:{recaudo:0,comision:0,pagos:0},EXTRAJUDICIAL:{recaudo:0,comision:0,pagos:0}};
+      data.rows.forEach(row=>{const team=norm(row.gestor)==='KPAQUILLAURI'?'JUDICIAL':'EXTRAJUDICIAL';teams[team].recaudo+=row.monto;teams[team].comision+=row.comision;teams[team].pagos+=1;});
+      document.querySelector('#paymentTypes').innerHTML=`<table><thead><tr><th>Tipo</th><th class="num">Pagos</th><th class="num">Recaudo</th><th class="num">Comisión</th></tr></thead><tbody>${Object.entries(teams).map(([name,values])=>`<tr><td>${name}</td><td class="num">${values.pagos}</td><td class="num">${money.format(values.recaudo)}</td><td class="num">${money.format(values.comision)}</td></tr>`).join('')}</tbody></table>`;
+      target.innerHTML=ranking.length?`<table><thead><tr><th>#</th><th>Asesor</th><th class="num">Meta</th><th class="num">Recaudo</th><th class="num">Efectividad</th><th class="num">Comisión</th></tr></thead><tbody>${ranking.map((row,index)=>`<tr><td>${index+1}</td><td>${html(row.gestor)}</td><td class="num">${row.meta?money.format(row.meta):'Sin meta'}</td><td class="num">${money.format(row.recaudo)}</td><td class="num">${row.efectividad===null?'—':pct.format(row.efectividad)}</td><td class="num">${money.format(row.comision)}</td></tr>`).join('')}</tbody></table>`:'<p class="empty">No hay asesores con meta para el período seleccionado.</p>';
+      document.querySelector('#otherLegend').textContent=otherPayments.pagos?`Leyenda: ${otherPayments.pagos} pagos de asesores que no figuran en META se agrupan como OTROS y no forman parte del ranking. Recaudo: ${money.format(otherPayments.recaudo)} · Comisión: ${money.format(otherPayments.comision)}.`:'Leyenda: OTROS agrupa pagos de asesores que no figuran en META del mes y no forma parte del ranking.';
     }
     function csvCell(value){
       let text=String(value??'');
@@ -125,8 +135,9 @@
       return `"${text.replace(/"/g,'""')}"`;
     }
     function downloadDetails(){
-      const headers=['Fecha','Asesor','ID cliente','Nro operación','Monto','Cartera','Antigüedad judicial','Ruta comisión','Cumplimiento cartera','Tasa','Comisión','Cruce con matriz'];
-      const rows=state.map(row=>[row.fecha,row.gestor,row.client,row.operacion,row.monto,row.cartera,row.antiguedad,row.route,pct.format(row.compliance),row.tasa===null?'':pct.format(row.tasa),row.comision,row.matrixMatch?'SI':'NO']);
+      const headers=['Fecha','Asesor','Grupo ranking','Equipo','ID cliente','Nro operación','Monto','Cartera','Antigüedad judicial','Ruta comisión','Cumplimiento cartera','Tasa','Comisión','Cruce con matriz'];
+      const metaAdvisorKeys=new Set(currentAdvisorMetas.map(row=>norm(get(row,'GESTOR'))));
+      const rows=state.map(row=>[row.fecha,row.gestor,metaAdvisorKeys.has(norm(row.gestor))?row.gestor:'OTROS',norm(row.gestor)==='KPAQUILLAURI'?'JUDICIAL':'EXTRAJUDICIAL',row.client,row.operacion,row.monto,row.cartera,row.antiguedad,row.route,pct.format(row.compliance),row.tasa===null?'':pct.format(row.tasa),row.comision,row.matrixMatch?'SI':'NO']);
       const content='\uFEFF'+[headers,...rows].map(row=>row.map(csvCell).join(';')).join('\r\n');
       const link=document.createElement('a');
       const url=URL.createObjectURL(new Blob([content],{type:'text/csv;charset=utf-8'}));
