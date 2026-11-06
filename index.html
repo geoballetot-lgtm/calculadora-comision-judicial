@@ -118,10 +118,11 @@
     function amount(v){ return Number(String(v).replace(/,/g,'').replace(/[^0-9.-]/g,''))||0; }
     async function source(url){ const r=await fetch(`${url}&_=${Date.now()}`); if(!r.ok)throw Error('No se pudo leer una hoja publicada.'); return csv(await r.text()); }
     function rate(cartera, compliance, route){ const i=routes.indexOf(route); const band=(rates[cartera]||[]).find(x=>compliance>=x[0]&&compliance<=x[1]); return band ? band[2][i] : null; }
-    function activeCommitmentsForPeriod(period){return commitmentRecords.filter(row=>key(date(get(row,'FECHAPAGO')))==key(period)&&(!get(row,'ESTADOCOMPROMISO')||['VIGENTE','ACTIVO'].includes(norm(get(row,'ESTADOCOMPROMISO')))));}
+    function activeCommitmentsForPeriod(period){if(key(period)!==key(new Date()))return [];return commitmentRecords.filter(row=>key(date(get(row,'FECHAPAGO')))==key(period)&&(!get(row,'ESTADOCOMPROMISO')||['VIGENTE','ACTIVO'].includes(norm(get(row,'ESTADOCOMPROMISO')))));}
     function updateCommitmentStatus(period, rows, forecastRows=[]){
       const status=document.querySelector('#commitmentStatus');
       if(!commitmentFileName){status.textContent='Carga el CSV para agregar compromisos al recaudo proyectado del mes seleccionado.';return;}
+      if(key(period)!==key(new Date())){status.textContent=`${commitmentFileName}: los compromisos solo se aplican al mes actual (${monthFmt.format(new Date())}); no se incluyen en ${monthFmt.format(period)}.`;return;}
       const total=rows.reduce((sum,row)=>sum+amount(get(row,'TOTALENSOLES','MONTOPAGADO')),0);
       const unmatched=forecastRows.filter(row=>!row.matrixMatch).length;
       const warning=unmatched?` ${unmatched} compromiso(s) no cruzan con la matriz: se incluyen en recaudo y efectividad, no en comisión proyectada.`:'';
