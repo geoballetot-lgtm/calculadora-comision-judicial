@@ -4,11 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Calculadora de comisión judicial</title>
+  <script>try{if(localStorage.getItem('calculadora-comision-theme')==='dark')document.documentElement.dataset.theme='dark';}catch(error){console.warn('No se pudo leer la preferencia del tema.',error);}</script>
   <style>
     :root { --ink:#16243a; --blue:#1e4d7b; --pale:#edf5fb; --line:#d6e0ea; --gold:#e8a93a; --red:#b23a35; --green:#16734b; --surface:#fff; --canvas:#f3f6fa; --shadow:0 10px 28px #152c430b; }
     * { box-sizing:border-box; }
     body { margin:0; color:var(--ink); font:14px/1.5 Inter,Segoe UI,Arial,sans-serif; background:var(--canvas); }
-    header { position:relative; overflow:hidden; color:#fff; padding:48px max(24px, calc((100vw - 1220px)/2)); background:radial-gradient(ellipse at 85% 0%,#3c78a355,transparent 38%),linear-gradient(125deg,#102842,#245b8a); }
+    header { position:relative; overflow:hidden; color:#fff; padding:64px max(24px, calc((100vw - 1220px)/2)) 48px; background:radial-gradient(ellipse at 85% 0%,#3c78a355,transparent 38%),linear-gradient(125deg,#102842,#245b8a); }
     h1 { margin:0 0 8px; font-size:clamp(28px,4vw,44px); letter-spacing:-1px; }
     header p { margin:0; max-width:760px; color:#d9e9f7; font-size:16px; }
     .signature-mark { position:absolute; right:max(24px, calc((100vw - 1220px)/2)); bottom:10px; width:96px; height:54px; object-fit:contain; opacity:.96; filter:drop-shadow(0 1px 2px #06192d80); }
@@ -84,6 +85,54 @@
     .leader-rate { flex:0 0 auto; color:#76550f; font-size:28px; font-weight:850; letter-spacing:-.5px; text-align:right; }
     .leader-rate small { display:block; color:#806c40; font-size:11px; font-weight:700; letter-spacing:0; }
     .card>p:last-child { color:#617083; }
+    :root[data-theme="dark"] { color-scheme:dark; --ink:#e7eef8; --blue:#4d82b4; --pale:#17283c; --line:#2b3d52; --gold:#e8b958; --red:#ff8f88; --green:#62d69b; --surface:#122235; --canvas:#0a1523; --shadow:0 10px 28px #0005; }
+    :root[data-theme="dark"] body { color:var(--ink); }
+    :root[data-theme="dark"] header { background:radial-gradient(ellipse at 85% 0%,#456b8a55,transparent 38%),linear-gradient(125deg,#071321,#142b43); }
+    :root[data-theme="dark"] .muted,
+    :root[data-theme="dark"] .overview-label,
+    :root[data-theme="dark"] .sort-note,
+    :root[data-theme="dark"] .sources { color:#aab8ca; }
+    :root[data-theme="dark"] .card h2 { color:#c0ccda; }
+    :root[data-theme="dark"] .overview-metrics>div { border-color:var(--line); background:#172a40; }
+    :root[data-theme="dark"] .overview-metrics>div:nth-child(n+3) { border-color:#304b66; background:#1b324a; }
+    :root[data-theme="dark"] th { color:#c2d0df; background:#1a2c41; }
+    :root[data-theme="dark"] th,
+    :root[data-theme="dark"] td { border-color:#29394d; }
+    :root[data-theme="dark"] tbody tr:hover { background:#ffffff0a; }
+    :root[data-theme="dark"] #ranking tr { background:#14263a; }
+    :root[data-theme="dark"] #ranking tbody tr.leader-row { background:linear-gradient(90deg,#40371f,#252a32); }
+    :root[data-theme="dark"] #ranking tbody tr.leader-row td:first-child { color:#f1ce75; }
+    :root[data-theme="dark"] .rank-tag { color:#f1ce75; background:#4d4227; }
+    :root[data-theme="dark"] input[type="month"],
+    :root[data-theme="dark"] select,
+    :root[data-theme="dark"] .upload input[type="file"] { border-color:#40536a; color:var(--ink); background:#172a40; }
+    :root[data-theme="dark"] .page-tabs { border-color:var(--line); background:#0f1d2e; }
+    :root[data-theme="dark"] .page-tab { color:#b3c1d1; }
+    :root[data-theme="dark"] .page-tab:hover,
+    :root[data-theme="dark"] .page-tab[aria-selected="true"] { border-color:#3a536e; color:#e7f2ff; background:#1c3149; }
+    :root[data-theme="dark"] .other-details { border-color:var(--line); background:#14263a; }
+    :root[data-theme="dark"] .other-details summary { color:#c1d0df; }
+    :root[data-theme="dark"] .other-details[open] summary { border-color:var(--line); }
+    :root[data-theme="dark"] .leader-spotlight { border-color:#62542f; background:linear-gradient(115deg,#302a1c,#1c2733 72%); }
+    :root[data-theme="dark"] .leader-kicker,
+    :root[data-theme="dark"] .leader-rate { color:#f1ce75; }
+    :root[data-theme="dark"] .leader-name { color:#edf4fc; }
+    :root[data-theme="dark"] .leader-detail,
+    :root[data-theme="dark"] .leader-rate small { color:#b4c0ce; }
+    :root[data-theme="dark"] .notice { color:#f2dda8; background:#382f1c; }
+    :root[data-theme="dark"] .notice.error { color:#ffc4bd; background:#3a2025; }
+    :root[data-theme="dark"] .pill.castigo { color:#ffb5ad; background:#482b31; }
+    :root[data-theme="dark"] .pill.vigente { color:#8ee0b6; background:#173c31; }
+    :root[data-theme="dark"] a { color:#85baff; }
+    :root[data-theme="dark"] .comparison-kpi { border-color:var(--line); background:#172a40; }
+    :root[data-theme="dark"] .comparison-kpi span,
+    :root[data-theme="dark"] .comparison-heading p { color:#adbdcf; }
+    :root[data-theme="dark"] .comparison-track { background:#293a4f; }
+    :root[data-theme="dark"] .empty { color:#aab8ca; }
+    .theme-toggle { position:absolute; top:16px; right:max(24px, calc((100vw - 1220px)/2)); padding:8px 12px; border:1px solid #ffffff50; border-radius:9px; color:#fff; background:#ffffff18; font-size:12px; }
+    .theme-toggle:hover { background:#ffffff2b; }
+    :root[data-theme="dark"] .theme-toggle { border-color:#ffffff40; background:#ffffff12; }
+    :root[data-theme="dark"] .theme-toggle:hover { background:#ffffff24; }
     .page-tabs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px; padding:6px; border:1px solid var(--line); border-radius:13px; background:#eaf0f6; }
     .page-tab { border:1px solid transparent; color:#526478; background:transparent; }
     .page-tab:hover { color:var(--blue); background:#fff; }
@@ -108,11 +157,12 @@
     .comparison-fill.current { background:linear-gradient(90deg,#41b99a,#4c91d2); }
     @media(max-width:820px) { .comparison-heading { flex-direction:column; }.comparison-kpis { grid-template-columns:1fr; } }
     @media(max-width:820px) { .summary,.grid { grid-template-columns:1fr; } .overview-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); } .toolbar { align-items:flex-start; flex-direction:column; } #ranking table,#ranking tbody { display:block; } #ranking thead { display:none; } #ranking tr { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); margin-bottom:10px; overflow:hidden; border:1px solid var(--line); border-radius:10px; background:#fff; } #ranking td { display:flex; width:auto!important; min-width:0; flex-direction:column; align-items:flex-start; gap:3px; padding:8px 10px; white-space:normal; text-align:left!important; } #ranking td::before { color:#617083; font-size:9px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; } #ranking td:nth-child(1)::before { content:"Puesto"; } #ranking td:nth-child(2)::before { content:"Asesor"; } #ranking td:nth-child(3)::before { content:"Meta"; } #ranking td:nth-child(4)::before { content:"Recaudo actual"; } #ranking td:nth-child(5)::before { content:"Comisión actual"; } #ranking td:nth-child(6)::before { content:"Compromisos"; } #ranking td:nth-child(7)::before { content:"Recaudo proyectado"; } #ranking td:nth-child(8)::before { content:"Efectividad actual"; } #ranking td:nth-child(9)::before { content:"Efectividad proyectada"; } #ranking td:nth-child(10)::before { content:"Comisión proyectada"; } }
-    @media(max-width:520px) { header { padding-top:34px; padding-bottom:34px; } header h1,header p { max-width:calc(100% - 76px); } .signature-mark { right:12px; bottom:8px; width:68px; height:42px; } main { margin-top:18px; padding:0 12px; } .card,.toolbar { padding:16px; } .overview-metrics { gap:8px; } .overview-metrics>div { padding:11px; } .leader-spotlight { align-items:flex-start; padding:15px; } .leader-rate { font-size:23px; } .ranking-actions { align-items:flex-start; flex-direction:column; } }
+    @media(max-width:520px) { header { padding-top:70px; padding-bottom:34px; } header h1,header p { max-width:calc(100% - 76px); } .theme-toggle { top:12px; right:12px; } .signature-mark { right:12px; bottom:8px; width:68px; height:42px; } main { margin-top:18px; padding:0 12px; } .card,.toolbar { padding:16px; } .overview-metrics { gap:8px; } .overview-metrics>div { padding:11px; } .leader-spotlight { align-items:flex-start; padding:15px; } .leader-rate { font-size:23px; } .ranking-actions { align-items:flex-start; flex-direction:column; } }
   </style>
 </head>
 <body>
   <header>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false">Modo noche</button>
     <img class="signature-mark" src="firma-geo.png" alt="Firma de Geo" />
     <h1>Calculadora de comisión judicial</h1>
     <p>Modelo Judicial B. Calcula comisiones por cartera y presenta el ranking mensual de asesores.</p>
@@ -348,6 +398,22 @@
       data.projectedCommitmentTotal=data.forecastRows.reduce((sum,row)=>sum+row.monto,0);
       data.projectedCommission=data.rows.reduce((sum,row)=>sum+row.comisionProyectada,0)+data.forecastRows.reduce((sum,row)=>sum+row.comisionProyectada,0);
     }
+    const themeToggle=document.querySelector('#themeToggle');
+    function updateThemeToggle(){
+      const isDark=document.documentElement.dataset.theme==='dark';
+      themeToggle.setAttribute('aria-pressed',String(isDark));
+      themeToggle.textContent=isDark?'Modo día':'Modo noche';
+      themeToggle.setAttribute('aria-label',isDark?'Cambiar a modo día':'Cambiar a modo noche');
+    }
+    updateThemeToggle();
+    themeToggle.addEventListener('click',()=>{
+      const isDark=document.documentElement.dataset.theme!=='dark';
+      if(isDark)document.documentElement.dataset.theme='dark';
+      else delete document.documentElement.dataset.theme;
+      updateThemeToggle();
+      try{localStorage.setItem('calculadora-comision-theme',isDark?'dark':'light');}
+      catch(error){console.warn('No se pudo guardar la preferencia del tema.',error);}
+    });
     async function load(){
       const button=document.querySelector('#refresh');button.disabled=true;button.textContent='Actualizando…';
       try {
