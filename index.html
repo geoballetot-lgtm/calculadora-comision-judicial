@@ -84,6 +84,26 @@
     .leader-rate { flex:0 0 auto; color:#76550f; font-size:28px; font-weight:850; letter-spacing:-.5px; text-align:right; }
     .leader-rate small { display:block; color:#806c40; font-size:11px; font-weight:700; letter-spacing:0; }
     .card>p:last-child { color:#617083; }
+    .page-tabs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px; padding:6px; border:1px solid var(--line); border-radius:13px; background:#eaf0f6; }
+    .page-tab { border:1px solid transparent; color:#526478; background:transparent; }
+    .page-tab:hover { color:var(--blue); background:#fff; }
+    .page-tab[aria-selected="true"] { border-color:#d6e0ea; color:var(--blue); background:#fff; box-shadow:0 2px 6px #152c4310; }
+    .page-panel[hidden] { display:none; }
+    .comparison-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:16px; }
+    .comparison-heading h2 { margin:0 0 5px; color:var(--ink); font-size:22px; text-transform:none; letter-spacing:-.03em; }
+    .comparison-heading p { margin:0; color:#617083; }
+    .comparison-kpis { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-bottom:16px; }
+    .comparison-kpi { padding:15px; border:1px solid #e6edf4; border-radius:12px; background:#f9fbfd; }
+    .comparison-kpi span { display:block; color:#617083; font-size:11px; font-weight:700; }
+    .comparison-kpi strong { display:block; margin-top:5px; font-size:21px; }
+    .comparison-table td { vertical-align:middle; }
+    .comparison-positive { color:var(--green); font-weight:800; }
+    .comparison-negative { color:var(--red); font-weight:800; }
+    .comparison-bar { min-width:110px; }
+    .comparison-track { height:7px; margin:4px 0; overflow:hidden; border-radius:99px; background:#e9eef3; }
+    .comparison-fill { height:100%; border-radius:inherit; background:#91a5ba; }
+    .comparison-fill.current { background:linear-gradient(90deg,#41b99a,#4c91d2); }
+    @media(max-width:820px) { .comparison-heading { flex-direction:column; }.comparison-kpis { grid-template-columns:1fr; } }
     @media(max-width:820px) { .summary,.grid { grid-template-columns:1fr; } .overview-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); } .toolbar { align-items:flex-start; flex-direction:column; } #ranking table,#ranking tbody { display:block; } #ranking thead { display:none; } #ranking tr { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); margin-bottom:10px; overflow:hidden; border:1px solid var(--line); border-radius:10px; background:#fff; } #ranking td { display:flex; width:auto!important; min-width:0; flex-direction:column; align-items:flex-start; gap:3px; padding:8px 10px; white-space:normal; text-align:left!important; } #ranking td::before { color:#617083; font-size:9px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; } #ranking td:nth-child(1)::before { content:"Puesto"; } #ranking td:nth-child(2)::before { content:"Asesor"; } #ranking td:nth-child(3)::before { content:"Meta"; } #ranking td:nth-child(4)::before { content:"Recaudo actual"; } #ranking td:nth-child(5)::before { content:"Comisión actual"; } #ranking td:nth-child(6)::before { content:"Compromisos"; } #ranking td:nth-child(7)::before { content:"Recaudo proyectado"; } #ranking td:nth-child(8)::before { content:"Efectividad actual"; } #ranking td:nth-child(9)::before { content:"Efectividad proyectada"; } #ranking td:nth-child(10)::before { content:"Comisión proyectada"; } }
     @media(max-width:520px) { header { padding-top:34px; padding-bottom:34px; } header h1,header p { max-width:calc(100% - 76px); } .signature-mark { right:12px; bottom:8px; width:68px; height:42px; } main { margin-top:18px; padding:0 12px; } .card,.toolbar { padding:16px; } .overview-metrics { gap:8px; } .overview-metrics>div { padding:11px; } .leader-spotlight { align-items:flex-start; padding:15px; } .leader-rate { font-size:23px; } .ranking-actions { align-items:flex-start; flex-direction:column; } }
   </style>
@@ -95,6 +115,11 @@
     <p>Modelo Judicial B. Calcula comisiones por cartera y presenta el ranking mensual de asesores.</p>
   </header>
   <main>
+    <nav class="page-tabs" role="tablist" aria-label="Secciones de la calculadora">
+      <button class="page-tab" id="calculatorTabButton" type="button" role="tab" aria-selected="true" aria-controls="calculatorPanel">Calculadora de comisión</button>
+      <button class="page-tab" id="advisorComparisonTabButton" type="button" role="tab" aria-selected="false" aria-controls="advisorComparisonPanel">Comparativo de asesores</button>
+    </nav>
+    <section class="page-panel" id="calculatorPanel" role="tabpanel" aria-labelledby="calculatorTabButton">
     <section class="toolbar">
       <div><div class="muted">Período aplicado</div><div class="period" id="period">Cargando…</div><div class="muted" id="rule"></div></div>
       <div class="actions"><label>Mes a calcular<input id="monthPicker" type="month" /></label><button id="refresh">Actualizar datos</button></div>
@@ -127,12 +152,50 @@
     </section>
     <aside class="card" style="margin-top:20px"><h2>Reglas aplicadas</h2><p>Los pagos se cruzan por ID CLIENTE con ID de la matriz. Los módulos 141 y 241 se clasifican como castigo; los demás, como vigente.</p><p>La tasa de comisión se determina por el cumplimiento global de cada cartera y la antigüedad judicial.</p></aside>
     <p class="sources">Fuentes: <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_8rxBU1DfWqyQMTgDon2CISw65lbLV3cJy5GIwPmrLUlaztZ8t1yF5KQCXOj3AXkpWTH-m9PVNjkz/pubhtml" target="_blank" rel="noreferrer">base de pagos y metas</a> · <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vST45TEkt8-r1yK85rIqJO9joI4nKbOzgdJb3C7zUkWNwI1ZWYd4P75c54ReN4EWU7MBf_v8z-Ln5_C/pubhtml" target="_blank" rel="noreferrer">matriz judicial</a>.</p>
+    </section>
+    <section class="page-panel" id="advisorComparisonPanel" role="tabpanel" aria-labelledby="advisorComparisonTabButton" hidden>
+      <section class="card">
+        <div class="comparison-heading">
+          <div>
+            <h2>Comparativo de recaudación por asesor</h2>
+            <p id="advisorComparisonPeriod">Acumulado del 1 al día de hoy frente al mismo día del mes anterior.</p>
+          </div>
+          <button id="refreshAdvisorComparison" type="button">Actualizar comparativo</button>
+        </div>
+        <div id="advisorComparisonMessage" role="status" aria-live="polite"></div>
+        <div id="advisorComparisonContent" hidden>
+          <div class="comparison-kpis">
+            <article class="comparison-kpi"><span id="advisorComparisonPreviousLabel">Mes anterior</span><strong id="advisorComparisonPreviousTotal">—</strong></article>
+            <article class="comparison-kpi"><span id="advisorComparisonCurrentLabel">Mes actual</span><strong id="advisorComparisonCurrentTotal">—</strong></article>
+            <article class="comparison-kpi"><span>Variación total</span><strong id="advisorComparisonDifference">—</strong><span id="advisorComparisonPercent"></span></article>
+          </div>
+          <div class="table-wrap">
+            <table class="comparison-table">
+              <thead>
+                <tr>
+                  <th>Asesor con meta este mes</th>
+                  <th class="num" id="advisorComparisonPreviousHeader">Mes anterior</th>
+                  <th class="num" id="advisorComparisonCurrentHeader">Mes actual</th>
+                  <th class="num">Variación</th>
+                  <th class="num">Variación %</th>
+                  <th>Comparación</th>
+                </tr>
+              </thead>
+              <tbody id="advisorComparisonRows"></tbody>
+            </table>
+          </div>
+          <p class="muted" id="advisorComparisonUpdated" style="margin-bottom:8px;font-size:12px"></p>
+          <p class="muted" style="margin-bottom:0;font-size:12px">Fuente: <a href="https://docs.google.com/spreadsheets/d/1mp6Hm5HK5eTAGV-8HvC1m6uxI42Ho7_3C0W5q8GploQ/edit?gid=868590283#gid=868590283" target="_blank" rel="noreferrer">CARGA DE PAGOS</a> · pagos y metas de las pestañas “Respuestas de formulario 1” y “META”.</p>
+        </div>
+      </section>
+    </section>
   </main>
   <script>
     const PAYMENTS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_8rxBU1DfWqyQMTgDon2CISw65lbLV3cJy5GIwPmrLUlaztZ8t1yF5KQCXOj3AXkpWTH-m9PVNjkz/pub?gid=465128810&single=true&output=csv';
     const METAS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_8rxBU1DfWqyQMTgDon2CISw65lbLV3cJy5GIwPmrLUlaztZ8t1yF5KQCXOj3AXkpWTH-m9PVNjkz/pub?gid=2079732674&single=true&output=csv';
     const ADVISOR_METAS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_8rxBU1DfWqyQMTgDon2CISw65lbLV3cJy5GIwPmrLUlaztZ8t1yF5KQCXOj3AXkpWTH-m9PVNjkz/pub?gid=868590283&single=true&output=csv';
     const MATRIX = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vST45TEkt8-r1yK85rIqJO9joI4nKbOzgdJb3C7zUkWNwI1ZWYd4P75c54ReN4EWU7MBf_v8z-Ln5_C/pub?gid=0&single=true&output=csv';
+    const ADVISOR_COMPARISON_SHEET = '1mp6Hm5HK5eTAGV-8HvC1m6uxI42Ho7_3C0W5q8GploQ';
     const rates = { VIGENTE:[[0,.6,[.05,.06,.05]],[.6001,.8,[.09,.1,.09]],[.8001,.9,[.1,.11,.1]],[.9001,1,[.11,.12,.11]],[1.0001,1.05,[.12,.13,.12]],[1.0501,1.1,[.13,.14,.13]],[1.1001,1.15,[.14,.15,.14]],[1.1501,1.2,[.15,.16,.15]],[1.2001,999,[.16,.17,.16]]], CASTIGO:[[0,.5,[.06,.07,.06]],[.5001,.8,[.11,.12,.11]],[.8001,.9,[.12,.13,.12]],[.9001,1,[.13,.14,.13]],[1.0001,1.05,[.14,.15,.14]],[1.0501,1.1,[.15,.16,.15]],[1.1001,1.15,[.16,.17,.16]],[1.1501,1.2,[.17,.18,.17]],[1.2001,999,[.18,.19,.18]]] };
     const routes = ['MENOR A 1 AÑO','MAYOR A 1 AÑO','CUOTA REFINANCIADA/FRACCIONADA'];
     const money = new Intl.NumberFormat('es-PE',{style:'currency',currency:'PEN',minimumFractionDigits:2});
@@ -150,6 +213,32 @@
     function get(row,...names){ for(const name of names){ const v=row[norm(name)]; if(v!==undefined)return v;} return ''; }
     function amount(v){ return Number(String(v).replace(/,/g,'').replace(/[^0-9.-]/g,''))||0; }
     async function source(url){ const r=await fetch(`${url}&_=${Date.now()}`); if(!r.ok)throw Error('No se pudo leer una hoja publicada.'); return csv(await r.text()); }
+    function sourceSheetTab(tabName){
+      return new Promise((resolve,reject)=>{
+        const callback=`__sheetCallback${Date.now()}${Math.random().toString(36).slice(2)}`;
+        const script=document.createElement('script');
+        const timeout=window.setTimeout(()=>finish(new Error('Se agotó el tiempo de espera al leer Google Sheets.')),20000);
+        function finish(error,result){
+          window.clearTimeout(timeout);
+          delete window[callback];
+          script.remove();
+          if(error)reject(error);else resolve(result);
+        }
+        window[callback]=response=>{
+          if(response.status!=='ok'){finish(new Error(`Google Sheets no pudo leer la pestaña "${tabName}".`));return;}
+          const columns=response.table.cols.map(column=>norm(column.label||column.id));
+          const rows=response.table.rows.map(row=>Object.fromEntries(columns.map((column,index)=>{
+            const cell=row.c?.[index];
+            return [column,cell?.f??cell?.v??''];
+          })));
+          finish(null,rows);
+        };
+        script.onerror=()=>finish(new Error(`No se pudo cargar la pestaña "${tabName}" de Google Sheets.`));
+        const query=new URLSearchParams({sheet:tabName,tqx:`out:json;responseHandler:${callback}`,_:String(Date.now())});
+        script.src=`https://docs.google.com/spreadsheets/d/${ADVISOR_COMPARISON_SHEET}/gviz/tq?${query}`;
+        document.head.append(script);
+      });
+    }
     function rate(cartera, compliance, route){ const i=routes.indexOf(route); const band=(rates[cartera]||[]).find(x=>compliance>=x[0]&&compliance<=x[1]); return band ? band[2][i] : null; }
     function activeCommitmentsForPeriod(period){if(key(period)!==key(new Date()))return [];return commitmentRecords.filter(row=>key(date(get(row,'FECHAPAGO')))==key(period)&&(!get(row,'ESTADOCOMPROMISO')||['VIGENTE','ACTIVO'].includes(norm(get(row,'ESTADOCOMPROMISO')))));}
     function updateCommitmentStatus(period, rows, forecastRows=[]){
@@ -297,6 +386,98 @@
       }
       finally {button.disabled=false;button.textContent='Actualizar datos';}
     }
+    let advisorComparisonLoaded=false;
+    async function loadAdvisorComparison(){
+      const button=document.querySelector('#refreshAdvisorComparison');
+      const message=document.querySelector('#advisorComparisonMessage');
+      const content=document.querySelector('#advisorComparisonContent');
+      button.disabled=true;
+      button.textContent='Actualizando…';
+      message.className='';
+      message.textContent='Leyendo pagos y metas del mes…';
+      content.hidden=true;
+      try{
+        const [payments,metas]=await Promise.all([
+          sourceSheetTab('Respuestas de formulario 1'),
+          sourceSheetTab('META')
+        ]);
+        const today=new Date();
+        const currentStart=new Date(today.getFullYear(),today.getMonth(),1);
+        const previousStart=new Date(today.getFullYear(),today.getMonth()-1,1);
+        const previousEnd=new Date(today.getFullYear(),today.getMonth()-1,Math.min(today.getDate(),new Date(today.getFullYear(),today.getMonth(),0).getDate()));
+        const activeAdvisors=new Map();
+        metas.forEach(row=>{
+          const metaDate=date(get(row,'FECHA'));
+          const advisor=String(get(row,'GESTOR')??'').trim();
+          const metaAmount=amount(get(row,'META'));
+          if(metaDate&&metaDate.getFullYear()===today.getFullYear()&&metaDate.getMonth()===today.getMonth()&&advisor&&metaAmount>0){
+            const advisorId=advisorKey(advisor);
+            if(!activeAdvisors.has(advisorId))activeAdvisors.set(advisorId,{gestor:advisor,previous:0,current:0,previousPayments:0,currentPayments:0});
+          }
+        });
+        const currentEnd=new Date(today.getFullYear(),today.getMonth(),today.getDate(),23,59,59,999);
+        const previousEndOfDay=new Date(previousEnd.getFullYear(),previousEnd.getMonth(),previousEnd.getDate(),23,59,59,999);
+        payments.forEach(row=>{
+          const advisor=activeAdvisors.get(advisorKey(get(row,'GESTOR')));
+          const paymentDate=date(get(row,'FECHA'));
+          if(!advisor||!paymentDate)return;
+          if(paymentDate>=previousStart&&paymentDate<=previousEndOfDay){
+            advisor.previous+=amount(get(row,'MONTO'));
+            advisor.previousPayments++;
+          }else if(paymentDate>=currentStart&&paymentDate<=currentEnd){
+            advisor.current+=amount(get(row,'MONTO'));
+            advisor.currentPayments++;
+          }
+        });
+        const rows=[...activeAdvisors.values()].sort((a,b)=>b.current-a.current||a.gestor.localeCompare(b.gestor,'es'));
+        const previousTotal=rows.reduce((total,row)=>total+row.previous,0);
+        const currentTotal=rows.reduce((total,row)=>total+row.current,0);
+        const difference=currentTotal-previousTotal;
+        const maxAmount=Math.max(0,...rows.map(row=>Math.max(row.previous,row.current)));
+        const previousLabel=monthFmt.format(previousStart);
+        const currentLabel=monthFmt.format(currentStart);
+        document.querySelector('#advisorComparisonPeriod').textContent=`Acumulado del 1 al ${today.getDate()} de ${currentLabel} frente al mismo día del mes anterior. Solo asesores con meta positiva en ${currentLabel}.`;
+        document.querySelector('#advisorComparisonPreviousLabel').textContent=previousLabel;
+        document.querySelector('#advisorComparisonCurrentLabel').textContent=currentLabel;
+        document.querySelector('#advisorComparisonPreviousHeader').textContent=previousLabel;
+        document.querySelector('#advisorComparisonCurrentHeader').textContent=currentLabel;
+        document.querySelector('#advisorComparisonPreviousTotal').textContent=money.format(previousTotal);
+        document.querySelector('#advisorComparisonCurrentTotal').textContent=money.format(currentTotal);
+        const differenceElement=document.querySelector('#advisorComparisonDifference');
+        differenceElement.textContent=`${difference>0?'+':''}${money.format(difference)}`;
+        differenceElement.className=difference>=0?'comparison-positive':'comparison-negative';
+        const percentageElement=document.querySelector('#advisorComparisonPercent');
+        percentageElement.textContent=previousTotal?`${difference>0?'+':''}${pct.format(difference/previousTotal)} frente al mes anterior`:(currentTotal?'Sin recaudo en el periodo anterior':'Sin recaudo en ambos periodos');
+        const tableBody=document.querySelector('#advisorComparisonRows');
+        tableBody.innerHTML=rows.length?rows.map(row=>{
+          const rowDifference=row.current-row.previous;
+          const variation=row.previous?`${rowDifference>0?'+':''}${pct.format(rowDifference/row.previous)}`:row.current?'Nuevo':'Sin pagos';
+          const variationClass=rowDifference>=0?'comparison-positive':'comparison-negative';
+          const previousWidth=maxAmount?row.previous/maxAmount*100:0;
+          const currentWidth=maxAmount?row.current/maxAmount*100:0;
+          return `<tr><td><strong>${html(row.gestor)}</strong></td><td class="num">${money.format(row.previous)}<div class="muted">${row.previousPayments} pago(s)</div></td><td class="num">${money.format(row.current)}<div class="muted">${row.currentPayments} pago(s)</div></td><td class="num ${variationClass}">${rowDifference>0?'+':''}${money.format(rowDifference)}</td><td class="num ${variationClass}">${variation}</td><td><div class="comparison-bar" aria-label="${html(previousLabel)} ${money.format(row.previous)}; ${html(currentLabel)} ${money.format(row.current)}"><div class="comparison-track"><div class="comparison-fill" style="width:${previousWidth}%"></div></div><div class="comparison-track"><div class="comparison-fill current" style="width:${currentWidth}%"></div></div></div></td></tr>`;
+        }).join(''):'<tr><td colspan="6" class="empty">No hay asesores con meta positiva registrada para este mes.</td></tr>';
+        document.querySelector('#advisorComparisonUpdated').textContent=`Actualizado ${new Intl.DateTimeFormat('es-PE',{dateStyle:'short',timeStyle:'short'}).format(new Date())}. Se analizaron ${rows.length} asesores con meta.`;
+        message.textContent='';
+        content.hidden=false;
+        advisorComparisonLoaded=true;
+      }catch(error){
+        console.error(error);
+        message.className='notice error';
+        message.textContent=`No se pudo cargar el comparativo desde Google Sheets. ${error.message}`;
+        advisorComparisonLoaded=false;
+      }finally{
+        button.disabled=false;
+        button.textContent='Actualizar comparativo';
+      }
+    }
+    document.querySelectorAll('.page-tab').forEach(button=>button.addEventListener('click',()=>{
+      const panelId=button.getAttribute('aria-controls');
+      document.querySelectorAll('.page-tab').forEach(tab=>tab.setAttribute('aria-selected',String(tab===button)));
+      document.querySelectorAll('.page-panel').forEach(panel=>panel.hidden=panel.id!==panelId);
+      if(panelId==='advisorComparisonPanel'&&!advisorComparisonLoaded)loadAdvisorComparison();
+    }));
+    document.querySelector('#refreshAdvisorComparison').addEventListener('click',loadAdvisorComparison);
     document.querySelector('#refresh').addEventListener('click',load);
     document.querySelector('#monthPicker').addEventListener('change',load);
     document.querySelector('#downloadDetails').addEventListener('click',downloadDetails);
