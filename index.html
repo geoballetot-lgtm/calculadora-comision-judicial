@@ -144,6 +144,21 @@
     :root[data-theme="dark"] .study-values div { border-color:#30475d; }
     :root[data-theme="dark"] .study-analysis { color:#bdc9d7; }
     :root[data-theme="dark"] .study-analysis b { color:#edf4fc; }
+    :root[data-theme="dark"] .study-average-highlight { border-color:#2f6351; background:#15362d; }
+    :root[data-theme="dark"] .study-average-highlight span,
+    :root[data-theme="dark"] .study-average-highlight small { color:#a7d4bd; }
+    :root[data-theme="dark"] .study-average-highlight strong { color:#8ee0b6; }
+    :root[data-theme="dark"] .study-chart-title,
+    :root[data-theme="dark"] .study-chart-legend { color:#adbdcf; }
+    :root[data-theme="dark"] .study-chart-grid { stroke:#30475d; }
+    :root[data-theme="dark"] .study-chart-label { fill:#adbdcf; }
+    :root[data-theme="dark"] .study-history { border-color:#30475d; background:#14263a; }
+    :root[data-theme="dark"] .study-history summary { color:#c1d0df; }
+    :root[data-theme="dark"] .study-history[open] summary { border-color:#30475d; }
+    :root[data-theme="dark"] .study-section-title { color:#edf4fc; }
+    :root[data-theme="dark"] .study-section-copy { color:#adbdcf; }
+    :root[data-theme="dark"] .study-analysis-section { border-color:#30475d; }
+    :root[data-theme="dark"] .study-final-average { color:#8ee0b6; background:#173c31; }
     :root[data-theme="dark"] .study-average td { color:#b9ddf8; background:#19354e; }
     :root[data-theme="dark"] .empty { color:#aab8ca; }
     .theme-toggle { position:absolute; top:16px; right:max(24px, calc((100vw - 1220px)/2)); padding:8px 12px; border:1px solid #ffffff50; border-radius:9px; color:#fff; background:#ffffff18; font-size:12px; }
@@ -194,9 +209,35 @@
     .study-values strong { display:block; margin-top:2px; font-size:14px; }
     .study-analysis { margin:0; color:#4c6074; font-size:12px; }
     .study-analysis b { color:#273e55; }
-    .study-history { margin-top:18px; }
+    .study-average-highlight { display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin:14px 0; padding:11px 12px; border:1px solid #c9e5d9; border-radius:11px; background:#eef9f3; }
+    .study-average-highlight span { color:#317154; font-size:10px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; }
+    .study-average-highlight strong { color:#11623f; font-size:23px; letter-spacing:-.5px; }
+    .study-average-highlight small { color:#4f7b68; font-size:11px; font-weight:700; }
+    .study-chart-title { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:0 0 5px; color:#526478; font-size:10px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+    .study-chart-legend { display:flex; gap:10px; color:#617083; font-size:10px; font-weight:700; letter-spacing:0; text-transform:none; }
+    .study-chart-legend i { display:inline-block; width:8px; height:8px; margin-right:4px; border-radius:50%; background:#2f82c9; }
+    .study-chart-legend i.caja { background:#2aa980; }
+    .study-chart { display:block; width:100%; height:142px; padding:7px 0 0; }
+    .study-chart-grid { stroke:#dce7ef; stroke-width:1; }
+    .study-chart-meta { fill:none; stroke:#2f82c9; stroke-width:3; stroke-linejoin:round; stroke-linecap:round; }
+    .study-chart-caja { fill:none; stroke:#2aa980; stroke-width:3; stroke-linejoin:round; stroke-linecap:round; }
+    .study-chart-point.meta { fill:#2f82c9; }
+    .study-chart-point.caja { fill:#2aa980; }
+    .study-chart-label { fill:#718398; font:10px Inter,Segoe UI,Arial,sans-serif; }
+    .study-history { margin-top:18px; border:1px solid #dce7ef; border-radius:12px; background:#fbfdff; }
     .study-history h3 { margin:0 0 9px; color:#526478; font-size:12px; text-transform:uppercase; letter-spacing:.07em; }
+    .study-history summary { padding:12px 14px; color:#3f5872; font-size:12px; font-weight:800; cursor:pointer; }
+    .study-history[open] summary { border-bottom:1px solid #dce7ef; }
+    .study-history .table-wrap { padding:0 12px 8px; }
     .study-average td { color:#163b5d; background:#eaf4fb; font-weight:800; }
+    .study-section-title { margin:0 0 4px; color:#263e57; font-size:16px; }
+    .study-section-copy { margin:0 0 12px; color:#617083; font-size:12px; }
+    .study-ranking { margin-bottom:20px; }
+    .study-ranking th:not(:first-child),.study-ranking td:not(:first-child) { text-align:right; }
+    .study-rank { color:#66798b; font-weight:800; text-align:center!important; }
+    .study-final-average { color:#11623f; background:#e7f6ee; font-size:15px; font-weight:850; }
+    .study-analysis-section { padding-top:18px; border-top:1px solid #e0e9f1; }
+    .study-analysis-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:14px; }
     @media(max-width:820px) { .comparison-heading,.study-heading { flex-direction:column; }.comparison-kpis,.study-kpis { grid-template-columns:1fr; } }
     @media(max-width:820px) { .summary,.grid { grid-template-columns:1fr; } .overview-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); } .toolbar { align-items:flex-start; flex-direction:column; } #ranking table,#ranking tbody { display:block; } #ranking thead { display:none; } #ranking tr { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); margin-bottom:10px; overflow:hidden; border:1px solid var(--line); border-radius:10px; background:#fff; } #ranking td { display:flex; width:auto!important; min-width:0; flex-direction:column; align-items:flex-start; gap:3px; padding:8px 10px; white-space:normal; text-align:left!important; } #ranking td::before { color:#617083; font-size:9px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; } #ranking td:nth-child(1)::before { content:"Puesto"; } #ranking td:nth-child(2)::before { content:"Asesor"; } #ranking td:nth-child(3)::before { content:"Meta"; } #ranking td:nth-child(4)::before { content:"Recaudo actual"; } #ranking td:nth-child(5)::before { content:"Comisión actual"; } #ranking td:nth-child(6)::before { content:"Compromisos"; } #ranking td:nth-child(7)::before { content:"Recaudo proyectado"; } #ranking td:nth-child(8)::before { content:"Efectividad actual"; } #ranking td:nth-child(9)::before { content:"Efectividad proyectada"; } #ranking td:nth-child(10)::before { content:"Comisión proyectada"; } }
     @media(max-width:520px) { header { padding-top:70px; padding-bottom:34px; } header h1,header p { max-width:calc(100% - 76px); } .theme-toggle { top:12px; right:12px; } .signature-mark { right:12px; bottom:8px; width:68px; height:42px; } main { margin-top:18px; padding:0 12px; } .card,.toolbar { padding:16px; } .overview-metrics { gap:8px; } .overview-metrics>div { padding:11px; } .leader-spotlight { align-items:flex-start; padding:15px; } .leader-rate { font-size:23px; } .ranking-actions { align-items:flex-start; flex-direction:column; } }
@@ -474,12 +515,31 @@
     });
     let studyProgressRequest=0;
     function studyMovement(label,current,previous){
-      if(!previous)return `<b>${label}</b> inicia en ${money.format(current)}.`;
+      if(previous===undefined||previous===null)return `<b>${label}</b> inicia en ${money.format(current)}.`;
       const difference=current-previous;
       if(Math.abs(difference)<.005)return `<b>${label}</b> se mantiene en ${money.format(current)}.`;
       const action=difference>0?'subió':'bajó';
-      const relative=` (${difference>0?'+':''}${pct.format(difference/previous)})`;
+      const relative=previous?` (${difference>0?'+':''}${pct.format(difference/previous)})`:'';
       return `<b>${label}</b> ${action} ${money.format(Math.abs(difference))}${relative}.`;
+    }
+    function studyTrendChart(history){
+      const width=360, height=132, left=18, right=10, top=12, bottom=24;
+      const plotWidth=width-left-right, plotHeight=height-top-bottom;
+      const maximum=Math.max(1,...history.map(item=>Math.max(item.meta,item.caja)));
+      const x=index=>left+(history.length===1?plotWidth/2:index*plotWidth/(history.length-1));
+      const y=value=>top+plotHeight-(value/maximum*plotHeight);
+      const line=field=>history.map((item,index)=>`${x(index).toFixed(1)},${y(item[field]).toFixed(1)}`).join(' ');
+      const points=(field,kind)=>history.map((item,index)=>`<circle class="study-chart-point ${kind}" cx="${x(index).toFixed(1)}" cy="${y(item[field]).toFixed(1)}" r="3.5"><title>${html(monthFmt.format(item.mes))}: ${money.format(item[field])}</title></circle>`).join('');
+      const labels=history.map((item,index)=>`<text class="study-chart-label" x="${x(index).toFixed(1)}" y="${height-5}" text-anchor="middle">${html(new Intl.DateTimeFormat('es-PE',{month:'short'}).format(item.mes).replace('.',''))}</text>`).join('');
+      return `<div class="study-chart-title"><span>META vs. CAJA</span><span class="study-chart-legend"><span><i></i>Meta</span><span><i class="caja"></i>Caja</span></span></div><svg class="study-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Evolución de meta y caja"><line class="study-chart-grid" x1="${left}" x2="${width-right}" y1="${top}" y2="${top}"></line><line class="study-chart-grid" x1="${left}" x2="${width-right}" y1="${top+plotHeight/2}" y2="${top+plotHeight/2}"></line><line class="study-chart-grid" x1="${left}" x2="${width-right}" y1="${top+plotHeight}" y2="${top+plotHeight}"></line><polyline class="study-chart-meta" points="${line('meta')}"></polyline><polyline class="study-chart-caja" points="${line('caja')}"></polyline>${points('meta','meta')}${points('caja','caja')}${labels}</svg>`;
+    }
+    function studyTrendInsight(study){
+      const first=study.history[0], latest=study.latest;
+      if(study.history.length<2)return 'Aún se requiere otro mes para evaluar la tendencia de META y CAJA.';
+      const metaVariation=first.meta?(latest.meta-first.meta)/first.meta:0;
+      const cajaVariation=first.caja?(latest.caja-first.caja)/first.caja:0;
+      const comparison=Math.abs(metaVariation-cajaVariation)<.01?'META y CAJA se mueven a un ritmo similar.':cajaVariation>metaVariation?'La CAJA viene creciendo más rápido que la META.':'La META viene creciendo más rápido que la CAJA.';
+      return `De ${monthFmt.format(first.mes)} a ${monthFmt.format(latest.mes)}: ${studyMovement('la META',latest.meta,first.meta)} ${studyMovement('la CAJA',latest.caja,first.caja)} <b>${comparison}</b>`;
     }
     function renderStudyProgress(rows){
       const content=document.querySelector('#studyProgressContent');
@@ -526,17 +586,23 @@
       const currentCompliance=latestMeta?latestCaja/latestMeta:0;
       const allAverage=data.reduce((sum,study)=>sum+study.averageCompliance,0)/data.length;
       subtitle.textContent=`Último mes informado: ${monthFmt.format(latestMonth)} · Fuente: pestaña Castillejo VS.`;
+      const periods=[...new Map(monthly.map(item=>[key(item.mes),item.mes])).values()].sort((a,b)=>a-b);
+      const ranking=data.slice().sort((a,b)=>b.averageCompliance-a.averageCompliance||a.estudio.localeCompare(b.estudio,'es'));
+      const rankingHeader=periods.map(period=>`<th class="num">${html(new Intl.DateTimeFormat('es-PE',{month:'short',year:'2-digit'}).format(period).replace('.',''))}</th>`).join('');
+      const rankingRows=ranking.map((study,index)=>{
+        const byPeriod=new Map(study.history.map(item=>[key(item.mes),item]));
+        const complianceCells=periods.map(period=>{const item=byPeriod.get(key(period));return `<td>${item?pct.format(item.cumplimiento):'—'}</td>`;}).join('');
+        return `<tr><td class="study-rank">${index+1}</td><td><strong>${html(study.estudio)}</strong><div class="study-city">${html(study.ciudad||'Sin ciudad')}</div></td>${complianceCells}<td class="study-final-average">${pct.format(study.averageCompliance)}</td></tr>`;
+      }).join('');
       const cards=data.map(study=>{
         const latest=study.latest;
-        const previous=study.previous;
         const width=Math.max(0,Math.min(latest.cumplimiento,1))*100;
-        const comparison=previous?` Frente a ${monthFmt.format(previous.mes)}: ${studyMovement('la meta',latest.meta,previous.meta)} ${studyMovement('la caja',latest.caja,previous.caja)}`:' Es el primer mes registrado para este estudio.';
-        return `<article class="study-card"><header><div><h3>${html(study.estudio)}</h3><div class="study-city">${html(study.ciudad||'Sin ciudad')} · ${html(monthFmt.format(latest.mes))}</div></div><div class="study-compliance">${pct.format(latest.cumplimiento)}<small>Cumplimiento</small></div></header><div class="study-progress" title="${pct.format(latest.cumplimiento)} de cumplimiento"><span style="width:${width}%"></span></div><div class="study-values"><div><span>Meta</span><strong>${money.format(latest.meta)}</strong></div><div><span>Caja</span><strong>${money.format(latest.caja)}</strong></div></div><p class="study-analysis">${comparison}</p></article>`;
+        return `<article class="study-card"><header><div><h3>${html(study.estudio)}</h3><div class="study-city">${html(study.ciudad||'Sin ciudad')} · último dato: ${html(monthFmt.format(latest.mes))}</div></div><div class="study-compliance">${pct.format(latest.cumplimiento)}<small>Cumplimiento actual</small></div></header><div class="study-values"><div><span>Meta actual</span><strong>${money.format(latest.meta)}</strong></div><div><span>Caja actual</span><strong>${money.format(latest.caja)}</strong></div></div><div class="study-average-highlight"><span>Promedio final</span><strong>${pct.format(study.averageCompliance)}</strong><small>${study.history.length} mes(es)</small></div>${studyTrendChart(study.history)}<p class="study-analysis">${studyTrendInsight(study)}</p></article>`;
       }).join('');
       const history=data.flatMap(study=>study.history.map(item=>({estudio:study.estudio,item}))).sort((a,b)=>b.item.mes-a.item.mes||a.estudio.localeCompare(b.estudio,'es'));
       const historyRows=history.map(({estudio,item})=>`<tr><td>${html(estudio)}</td><td>${html(monthFmt.format(item.mes))}</td><td class="num">${money.format(item.meta)}</td><td class="num">${money.format(item.caja)}</td><td class="num">${pct.format(item.cumplimiento)}</td></tr>`).join('');
       const averageRows=data.map(study=>`<tr class="study-average"><td>${html(study.estudio)}</td><td>Promedio de todos los meses</td><td class="num">${money.format(study.averageMeta)}</td><td class="num">${money.format(study.averageCaja)}</td><td class="num">${pct.format(study.averageCompliance)}</td></tr>`).join('');
-      content.innerHTML=`<div class="study-kpis"><div class="study-kpi"><span>Cumplimiento del último mes</span><strong>${pct.format(currentCompliance)}</strong></div><div class="study-kpi"><span>Meta total · ${html(monthFmt.format(latestMonth))}</span><strong>${money.format(latestMeta)}</strong></div><div class="study-kpi"><span>Promedio de cumplimiento · historial</span><strong>${pct.format(allAverage)}</strong></div></div><div class="study-cards">${cards}</div><div class="study-history"><h3>Historial de META, CAJA y cumplimiento</h3><div class="table-wrap"><table><thead><tr><th>Estudio</th><th>Mes</th><th class="num">Meta</th><th class="num">Caja</th><th class="num">Cumplimiento</th></tr></thead><tbody>${historyRows}${averageRows}</tbody></table></div></div>`;
+      content.innerHTML=`<div class="study-kpis"><div class="study-kpi"><span>Cumplimiento global · ${html(monthFmt.format(latestMonth))}</span><strong>${pct.format(currentCompliance)}</strong></div><div class="study-kpi"><span>Meta total · ${html(monthFmt.format(latestMonth))}</span><strong>${money.format(latestMeta)}</strong></div><div class="study-kpi"><span>Caja total · ${html(monthFmt.format(latestMonth))}</span><strong>${money.format(latestCaja)}</strong></div></div><section class="study-ranking"><h3 class="study-section-title">Ranking de efectividad</h3><p class="study-section-copy">Ordenado por el promedio final de cumplimiento. Cada columna muestra la efectividad de ese mes.</p><div class="table-wrap"><table><thead><tr><th>#</th><th>Estudio</th>${rankingHeader}<th>Promedio final</th></tr></thead><tbody>${rankingRows}</tbody></table></div></section><section class="study-analysis-section"><h3 class="study-section-title">Análisis comparativo de META y CAJA</h3><p class="study-section-copy">Las líneas usan la misma escala dentro de cada estudio para mostrar cómo se relacionan META y CAJA a lo largo de los meses.</p><div class="study-analysis-grid">${cards}</div></section><details class="study-history"><summary>Ver detalle histórico y promedios por estudio</summary><div class="table-wrap"><table><thead><tr><th>Estudio</th><th>Mes</th><th class="num">Meta</th><th class="num">Caja</th><th class="num">Cumplimiento</th></tr></thead><tbody>${historyRows}${averageRows}</tbody></table></div></details>`;
     }
     async function loadStudyProgress(){
       const request=++studyProgressRequest;
