@@ -130,6 +130,21 @@
     :root[data-theme="dark"] .comparison-kpi span,
     :root[data-theme="dark"] .comparison-heading p { color:#adbdcf; }
     :root[data-theme="dark"] .comparison-track { background:#293a4f; }
+    :root[data-theme="dark"] .study-kpi { border-color:var(--line); background:#172a40; }
+    :root[data-theme="dark"] .study-kpi span,
+    :root[data-theme="dark"] .study-heading p,
+    :root[data-theme="dark"] .study-city,
+    :root[data-theme="dark"] .study-compliance small,
+    :root[data-theme="dark"] .study-values span { color:#adbdcf; }
+    :root[data-theme="dark"] .study-card { border-color:#304b66; background:linear-gradient(145deg,#172c42,#14263a); }
+    :root[data-theme="dark"] .study-card header,
+    :root[data-theme="dark"] .study-heading h2 { color:#edf4fc; }
+    :root[data-theme="dark"] .study-compliance { color:#7fe0bd; }
+    :root[data-theme="dark"] .study-progress { background:#293e52; }
+    :root[data-theme="dark"] .study-values div { border-color:#30475d; }
+    :root[data-theme="dark"] .study-analysis { color:#bdc9d7; }
+    :root[data-theme="dark"] .study-analysis b { color:#edf4fc; }
+    :root[data-theme="dark"] .study-average td { color:#b9ddf8; background:#19354e; }
     :root[data-theme="dark"] .empty { color:#aab8ca; }
     .theme-toggle { position:absolute; top:16px; right:max(24px, calc((100vw - 1220px)/2)); padding:8px 12px; border:1px solid #ffffff50; border-radius:9px; color:#fff; background:#ffffff18; font-size:12px; }
     .theme-toggle:hover { background:#ffffff2b; }
@@ -157,7 +172,32 @@
     .comparison-track { height:7px; margin:4px 0; overflow:hidden; border-radius:99px; background:#e9eef3; }
     .comparison-fill { height:100%; border-radius:inherit; background:#91a5ba; }
     .comparison-fill.current { background:linear-gradient(90deg,#41b99a,#4c91d2); }
-    @media(max-width:820px) { .comparison-heading { flex-direction:column; }.comparison-kpis { grid-template-columns:1fr; } }
+    .study-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:16px; }
+    .study-heading h2 { margin:0 0 5px; color:var(--ink); font-size:22px; text-transform:none; letter-spacing:-.03em; }
+    .study-heading p { margin:0; color:#617083; }
+    .study-kpis { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-bottom:16px; }
+    .study-kpi { padding:15px; border:1px solid #e6edf4; border-radius:12px; background:#f9fbfd; }
+    .study-kpi span { display:block; color:#617083; font-size:11px; font-weight:700; }
+    .study-kpi strong { display:block; margin-top:5px; font-size:21px; }
+    .study-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; }
+    .study-card { padding:16px; border:1px solid #dbe7f1; border-radius:14px; background:linear-gradient(145deg,#fbfdff,#f2f8fc); }
+    .study-card header { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:0; color:var(--ink); background:none; }
+    .study-card h3 { margin:0; font-size:17px; }
+    .study-city { color:#617083; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
+    .study-compliance { color:#146b4c; font-size:27px; font-weight:850; letter-spacing:-.6px; text-align:right; }
+    .study-compliance small { display:block; color:#617083; font-size:10px; font-weight:700; letter-spacing:0; }
+    .study-progress { height:9px; margin:14px 0 11px; overflow:hidden; border-radius:99px; background:#dbe7ef; }
+    .study-progress span { display:block; height:100%; border-radius:inherit; background:linear-gradient(90deg,#2baf8e,#347ec2); }
+    .study-values { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
+    .study-values div { padding:8px 0; border-top:1px solid #dce7ef; }
+    .study-values span { display:block; color:#617083; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+    .study-values strong { display:block; margin-top:2px; font-size:14px; }
+    .study-analysis { margin:0; color:#4c6074; font-size:12px; }
+    .study-analysis b { color:#273e55; }
+    .study-history { margin-top:18px; }
+    .study-history h3 { margin:0 0 9px; color:#526478; font-size:12px; text-transform:uppercase; letter-spacing:.07em; }
+    .study-average td { color:#163b5d; background:#eaf4fb; font-weight:800; }
+    @media(max-width:820px) { .comparison-heading,.study-heading { flex-direction:column; }.comparison-kpis,.study-kpis { grid-template-columns:1fr; } }
     @media(max-width:820px) { .summary,.grid { grid-template-columns:1fr; } .overview-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); } .toolbar { align-items:flex-start; flex-direction:column; } #ranking table,#ranking tbody { display:block; } #ranking thead { display:none; } #ranking tr { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); margin-bottom:10px; overflow:hidden; border:1px solid var(--line); border-radius:10px; background:#fff; } #ranking td { display:flex; width:auto!important; min-width:0; flex-direction:column; align-items:flex-start; gap:3px; padding:8px 10px; white-space:normal; text-align:left!important; } #ranking td::before { color:#617083; font-size:9px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; } #ranking td:nth-child(1)::before { content:"Puesto"; } #ranking td:nth-child(2)::before { content:"Asesor"; } #ranking td:nth-child(3)::before { content:"Meta"; } #ranking td:nth-child(4)::before { content:"Recaudo actual"; } #ranking td:nth-child(5)::before { content:"Comisión actual"; } #ranking td:nth-child(6)::before { content:"Compromisos"; } #ranking td:nth-child(7)::before { content:"Recaudo proyectado"; } #ranking td:nth-child(8)::before { content:"Efectividad actual"; } #ranking td:nth-child(9)::before { content:"Efectividad proyectada"; } #ranking td:nth-child(10)::before { content:"Comisión proyectada"; } }
     @media(max-width:520px) { header { padding-top:70px; padding-bottom:34px; } header h1,header p { max-width:calc(100% - 76px); } .theme-toggle { top:12px; right:12px; } .signature-mark { right:12px; bottom:8px; width:68px; height:42px; } main { margin-top:18px; padding:0 12px; } .card,.toolbar { padding:16px; } .overview-metrics { gap:8px; } .overview-metrics>div { padding:11px; } .leader-spotlight { align-items:flex-start; padding:15px; } .leader-rate { font-size:23px; } .ranking-actions { align-items:flex-start; flex-direction:column; } }
   </style>
@@ -206,6 +246,15 @@
       <div class="table-wrap" id="paymentTypes"></div>
     </section>
     <aside class="card" style="margin-top:20px"><h2>Reglas aplicadas</h2><p>Los pagos se cruzan por ID CLIENTE con ID de la matriz. Los módulos 141 y 241 se clasifican como castigo; los demás, como vigente.</p><p>La tasa de comisión se determina por el cumplimiento global de cada cartera y la antigüedad judicial.</p></aside>
+    <section class="card" style="margin-top:20px" id="studyProgressPanel" aria-live="polite">
+      <div class="study-heading">
+        <div>
+          <h2>Avance por estudio</h2>
+          <p id="studyProgressSubtitle">Leyendo la pestaña Castillejo VS…</p>
+        </div>
+      </div>
+      <div id="studyProgressContent"><p class="empty">Cargando avance, meta y caja por estudio…</p></div>
+    </section>
     <p class="sources">Fuentes: <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_8rxBU1DfWqyQMTgDon2CISw65lbLV3cJy5GIwPmrLUlaztZ8t1yF5KQCXOj3AXkpWTH-m9PVNjkz/pubhtml" target="_blank" rel="noreferrer">base de pagos y metas</a> · <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vST45TEkt8-r1yK85rIqJO9joI4nKbOzgdJb3C7zUkWNwI1ZWYd4P75c54ReN4EWU7MBf_v8z-Ln5_C/pubhtml" target="_blank" rel="noreferrer">matriz judicial</a>.</p>
     </section>
     <section class="page-panel" id="advisorComparisonPanel" role="tabpanel" aria-labelledby="advisorComparisonTabButton" hidden>
@@ -256,6 +305,7 @@
     const ADVISOR_METAS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_8rxBU1DfWqyQMTgDon2CISw65lbLV3cJy5GIwPmrLUlaztZ8t1yF5KQCXOj3AXkpWTH-m9PVNjkz/pub?gid=868590283&single=true&output=csv';
     const MATRIX = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vST45TEkt8-r1yK85rIqJO9joI4nKbOzgdJb3C7zUkWNwI1ZWYd4P75c54ReN4EWU7MBf_v8z-Ln5_C/pub?gid=0&single=true&output=csv';
     const ADVISOR_COMPARISON_SHEET = '1mp6Hm5HK5eTAGV-8HvC1m6uxI42Ho7_3C0W5q8GploQ';
+    const STUDY_PROGRESS_TAB = 'CASTILLEJO VS';
     const rates = { VIGENTE:[[0,.6,[.05,.06,.05]],[.6001,.8,[.09,.1,.09]],[.8001,.9,[.1,.11,.1]],[.9001,1,[.11,.12,.11]],[1.0001,1.05,[.12,.13,.12]],[1.0501,1.1,[.13,.14,.13]],[1.1001,1.15,[.14,.15,.14]],[1.1501,1.2,[.15,.16,.15]],[1.2001,999,[.16,.17,.16]]], CASTIGO:[[0,.5,[.06,.07,.06]],[.5001,.8,[.11,.12,.11]],[.8001,.9,[.12,.13,.12]],[.9001,1,[.13,.14,.13]],[1.0001,1.05,[.14,.15,.14]],[1.0501,1.1,[.15,.16,.15]],[1.1001,1.15,[.16,.17,.16]],[1.1501,1.2,[.17,.18,.17]],[1.2001,999,[.18,.19,.18]]] };
     const routes = ['MENOR A 1 AÑO','MAYOR A 1 AÑO','CUOTA REFINANCIADA/FRACCIONADA'];
     const money = new Intl.NumberFormat('es-PE',{style:'currency',currency:'PEN',minimumFractionDigits:2});
@@ -269,9 +319,15 @@
     function csv(text) { const out=csvRows(text); const h=out.shift().map(norm); return out.map(r=>Object.fromEntries(h.map((k,i)=>[k,r[i]??'']))); }
     function csvObjects(text, requiredHeaders) { const rows=csvRows(text); const headerIndex=rows.findIndex(row=>{const headers=row.map(norm);return requiredHeaders.every(name=>headers.includes(name));}); if(headerIndex<0)throw Error(`El CSV no contiene los encabezados requeridos: ${requiredHeaders.join(', ')}.`); const headers=rows[headerIndex].map(norm); return rows.slice(headerIndex+1).map(row=>Object.fromEntries(headers.map((name,index)=>[name,row[index]??'']))); }
     function date(value){ const text=String(value??'').trim(); const iso=text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); if(iso)return new Date(Number(iso[1]),Number(iso[2])-1,Number(iso[3])); const parts=text.split(/[\/\-]/).map(Number); const [d,m,y]=parts; return d&&m&&y ? new Date(y,m-1,d) : null; }
+    function monthDate(value){
+      const text=String(value??'').trim();
+      const monthYear=text.match(/^(\d{1,2})[\/-](\d{4})$/);
+      return monthYear ? new Date(Number(monthYear[2]),Number(monthYear[1])-1,1) : date(value);
+    }
     function key(d){ return d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}` : ''; }
     function get(row,...names){ for(const name of names){ const v=row[norm(name)]; if(v!==undefined)return v;} return ''; }
     function amount(v){ return Number(String(v).replace(/,/g,'').replace(/[^0-9.-]/g,''))||0; }
+    function percentage(v){ const text=String(v??''); const value=amount(text); return text.includes('%') ? value/100 : value; }
     async function source(url){ const r=await fetch(`${url}&_=${Date.now()}`); if(!r.ok)throw Error('No se pudo leer una hoja publicada.'); return csv(await r.text()); }
     function sourceSheetTab(tabName){
       return new Promise((resolve,reject)=>{
@@ -416,8 +472,91 @@
       try{localStorage.setItem('calculadora-comision-theme',isDark?'dark':'light');}
       catch(error){console.warn('No se pudo guardar la preferencia del tema.',error);}
     });
+    let studyProgressRequest=0;
+    function studyMovement(label,current,previous){
+      if(!previous)return `<b>${label}</b> inicia en ${money.format(current)}.`;
+      const difference=current-previous;
+      if(Math.abs(difference)<.005)return `<b>${label}</b> se mantiene en ${money.format(current)}.`;
+      const action=difference>0?'subió':'bajó';
+      const relative=` (${difference>0?'+':''}${pct.format(difference/previous)})`;
+      return `<b>${label}</b> ${action} ${money.format(Math.abs(difference))}${relative}.`;
+    }
+    function renderStudyProgress(rows){
+      const content=document.querySelector('#studyProgressContent');
+      const subtitle=document.querySelector('#studyProgressSubtitle');
+      const groupedMonths=new Map();
+      rows.forEach(row=>{
+        const mes=monthDate(get(row,'MES'));
+        const estudio=String(get(row,'ESTUDIO')).trim();
+        if(!mes||!estudio)return;
+        const ciudad=String(get(row,'CIUDAD')).trim();
+        const groupKey=`${ciudad}|${estudio}|${key(mes)}`;
+        if(!groupedMonths.has(groupKey))groupedMonths.set(groupKey,{ciudad,estudio,mes,meta:0,caja:0,cumplimientoTotal:0,cumplimientoCount:0});
+        const item=groupedMonths.get(groupKey);
+        item.meta+=amount(get(row,'META'));
+        item.caja+=amount(get(row,'CAJA'));
+        const cumplimiento=percentage(get(row,'CUMPLIMIENTO'));
+        if(cumplimiento||String(get(row,'CUMPLIMIENTO')).trim()==='0'){item.cumplimientoTotal+=cumplimiento;item.cumplimientoCount++;}
+      });
+      const monthly=[...groupedMonths.values()].map(item=>({...item,cumplimiento:item.meta?item.caja/item.meta:(item.cumplimientoCount?item.cumplimientoTotal/item.cumplimientoCount:0)}));
+      if(!monthly.length){
+        subtitle.textContent='No hay registros válidos de META, CAJA y MES en la pestaña Castillejo VS.';
+        content.innerHTML='<p class="empty">Aún no hay avances para mostrar.</p>';
+        return;
+      }
+      const studies=new Map();
+      monthly.forEach(item=>{
+        const studyKey=`${item.ciudad}|${item.estudio}`;
+        if(!studies.has(studyKey))studies.set(studyKey,{ciudad:item.ciudad,estudio:item.estudio,history:[]});
+        studies.get(studyKey).history.push(item);
+      });
+      const data=[...studies.values()].map(study=>{
+        study.history.sort((a,b)=>a.mes-b.mes);
+        study.latest=study.history.at(-1);
+        study.previous=study.history.at(-2);
+        study.averageCompliance=study.history.reduce((sum,item)=>sum+item.cumplimiento,0)/study.history.length;
+        study.averageMeta=study.history.reduce((sum,item)=>sum+item.meta,0)/study.history.length;
+        study.averageCaja=study.history.reduce((sum,item)=>sum+item.caja,0)/study.history.length;
+        return study;
+      }).sort((a,b)=>a.estudio.localeCompare(b.estudio,'es'));
+      const latestMonth=new Date(Math.max(...data.map(study=>study.latest.mes)));
+      const latestEntries=data.filter(study=>key(study.latest.mes)===key(latestMonth));
+      const latestMeta=latestEntries.reduce((sum,study)=>sum+study.latest.meta,0);
+      const latestCaja=latestEntries.reduce((sum,study)=>sum+study.latest.caja,0);
+      const currentCompliance=latestMeta?latestCaja/latestMeta:0;
+      const allAverage=data.reduce((sum,study)=>sum+study.averageCompliance,0)/data.length;
+      subtitle.textContent=`Último mes informado: ${monthFmt.format(latestMonth)} · Fuente: pestaña Castillejo VS.`;
+      const cards=data.map(study=>{
+        const latest=study.latest;
+        const previous=study.previous;
+        const width=Math.max(0,Math.min(latest.cumplimiento,1))*100;
+        const comparison=previous?` Frente a ${monthFmt.format(previous.mes)}: ${studyMovement('la meta',latest.meta,previous.meta)} ${studyMovement('la caja',latest.caja,previous.caja)}`:' Es el primer mes registrado para este estudio.';
+        return `<article class="study-card"><header><div><h3>${html(study.estudio)}</h3><div class="study-city">${html(study.ciudad||'Sin ciudad')} · ${html(monthFmt.format(latest.mes))}</div></div><div class="study-compliance">${pct.format(latest.cumplimiento)}<small>Cumplimiento</small></div></header><div class="study-progress" title="${pct.format(latest.cumplimiento)} de cumplimiento"><span style="width:${width}%"></span></div><div class="study-values"><div><span>Meta</span><strong>${money.format(latest.meta)}</strong></div><div><span>Caja</span><strong>${money.format(latest.caja)}</strong></div></div><p class="study-analysis">${comparison}</p></article>`;
+      }).join('');
+      const history=data.flatMap(study=>study.history.map(item=>({estudio:study.estudio,item}))).sort((a,b)=>b.item.mes-a.item.mes||a.estudio.localeCompare(b.estudio,'es'));
+      const historyRows=history.map(({estudio,item})=>`<tr><td>${html(estudio)}</td><td>${html(monthFmt.format(item.mes))}</td><td class="num">${money.format(item.meta)}</td><td class="num">${money.format(item.caja)}</td><td class="num">${pct.format(item.cumplimiento)}</td></tr>`).join('');
+      const averageRows=data.map(study=>`<tr class="study-average"><td>${html(study.estudio)}</td><td>Promedio de todos los meses</td><td class="num">${money.format(study.averageMeta)}</td><td class="num">${money.format(study.averageCaja)}</td><td class="num">${pct.format(study.averageCompliance)}</td></tr>`).join('');
+      content.innerHTML=`<div class="study-kpis"><div class="study-kpi"><span>Cumplimiento del último mes</span><strong>${pct.format(currentCompliance)}</strong></div><div class="study-kpi"><span>Meta total · ${html(monthFmt.format(latestMonth))}</span><strong>${money.format(latestMeta)}</strong></div><div class="study-kpi"><span>Promedio de cumplimiento · historial</span><strong>${pct.format(allAverage)}</strong></div></div><div class="study-cards">${cards}</div><div class="study-history"><h3>Historial de META, CAJA y cumplimiento</h3><div class="table-wrap"><table><thead><tr><th>Estudio</th><th>Mes</th><th class="num">Meta</th><th class="num">Caja</th><th class="num">Cumplimiento</th></tr></thead><tbody>${historyRows}${averageRows}</tbody></table></div></div>`;
+    }
+    async function loadStudyProgress(){
+      const request=++studyProgressRequest;
+      const content=document.querySelector('#studyProgressContent');
+      const subtitle=document.querySelector('#studyProgressSubtitle');
+      subtitle.textContent='Leyendo la pestaña Castillejo VS…';
+      content.innerHTML='<p class="empty">Cargando avance, meta y caja por estudio…</p>';
+      try{
+        const rows=await sourceSheetTab(STUDY_PROGRESS_TAB);
+        if(request===studyProgressRequest)renderStudyProgress(rows);
+      }catch(error){
+        console.error(error);
+        if(request!==studyProgressRequest)return;
+        subtitle.textContent='No se pudo leer la pestaña Castillejo VS.';
+        content.innerHTML=`<div class="notice error">No se pudo cargar el avance por estudio. ${html(error.message)}</div>`;
+      }
+    }
     async function load(){
       const button=document.querySelector('#refresh');button.disabled=true;button.textContent='Actualizando…';
+      loadStudyProgress();
       try {
         const [payments,metas,matrix,advisorMetas]=await Promise.all([source(PAYMENTS),source(METAS),source(MATRIX),source(ADVISOR_METAS)]);
         const now=new Date();
