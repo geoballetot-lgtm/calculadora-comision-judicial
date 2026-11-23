@@ -16,7 +16,7 @@
     main { max-width:1220px; margin:30px auto 70px; padding:0 20px; }
     .toolbar, .card { background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); }
     .toolbar { display:flex; align-items:center; gap:18px; justify-content:space-between; padding:20px 22px; margin-bottom:20px; }
-    .actions { display:flex; align-items:end; gap:10px; }
+    .actions { display:flex; flex-wrap:wrap; align-items:end; gap:10px; }
     .ranking-actions { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; }
     .upload { display:flex; flex-wrap:wrap; align-items:end; gap:12px; }
     .upload input[type="file"] { max-width:100%; border:1px solid #c5d2df; border-radius:8px; padding:8px; background:#fff; color:#27394c; font:inherit; }
@@ -357,13 +357,12 @@
     <section class="page-panel" id="calculatorPanel" role="tabpanel" aria-labelledby="calculatorTabButton">
     <section class="toolbar">
       <div><div class="muted">Período aplicado</div><div class="period" id="period">Cargando…</div><div class="muted" id="rule"></div></div>
-      <div class="actions"><label>Mes a calcular<input id="monthPicker" type="month" /></label><button id="refresh">Actualizar datos</button></div>
+      <div class="actions"><label>Mes a calcular<input id="monthPicker" type="month" /></label><button id="refresh">Actualizar datos</button><button id="downloadReport" type="button" disabled>Descargar informe Excel</button></div>
     </section>
     <section class="card" style="margin-bottom:20px">
       <h2>Proyección de compromisos</h2>
       <div class="upload">
         <label>Cargar archivo CSV de compromisos<input id="commitmentsFile" type="file" accept=".csv,text/csv" /></label>
-        <button id="downloadCommitments" type="button" disabled>Descargar adjunto en Excel</button>
         <button id="clearCommitments" type="button">Quitar archivo</button>
       </div>
       <p class="muted" id="commitmentStatus">Carga el CSV para agregar compromisos al recaudo proyectado del mes seleccionado.</p>
@@ -536,12 +535,7 @@
       if(!records.length)throw Error('El archivo no contiene filas de compromisos.');
       commitmentRecords=records;
       commitmentFileName=file.name;
-      updateCommitmentDownload();
       await load();
-    }
-    function updateCommitmentDownload(){
-      const button=document.querySelector('#downloadCommitments');
-      if(button)button.disabled=!commitmentRecords.length;
     }
     function xml(value){return String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[char]));}
     function excelColumn(index){let output='';for(let value=index+1;value;value=Math.floor((value-1)/26))output=String.fromCharCode(65+(value-1)%26)+output;return output;}
@@ -556,13 +550,36 @@
       const directoryOffset=offset;const directoryParts=directory.flat();const directorySize=directoryParts.reduce((total,item)=>total+item.length,0);parts.push(...directoryParts,u32(0x06054b50),u16(0),u16(0),u16(entries.length),u16(entries.length),u32(directorySize),u32(directoryOffset),u16(0));
       return new Blob(parts,{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
     }
-    function downloadCommitmentsExcel(){
-      if(!commitmentRecords.length)return;
-      const headers=Object.keys(commitmentRecords[0]);
-      const rows=[headers,...commitmentRecords.map(record=>headers.map(header=>record[header]??''))];
+    function downloadReportExcel(){
+      if(!currentData)return;
+      const {groups}=currentData;
+      const vigente=groups.VIGENTE,castigo=groups.CASTIGO;
+      const metaTotal=(vigente.meta||0)+(castigo.meta||0);
+      const recaudoTotal=(vigente.total||0)+(castigo.total||0);
+      const recaudoProyectado=recaudoTotal+(currentData.projectedCommitmentTotal||0);
+      const rows=[
+        ['INFORME DE COMISIÓN JUDICIAL'],
+        ['Período',monthFmt.format(currentPeriod)],
+        [],
+        ['RESUMEN GENERAL'],
+        ['Indicador','Valor'],
+        ['Recaudo actual',money.format(recaudoTotal)],
+        ['Comisión actual',money.format(vigente.commission+castigo.commission)],
+        ['Recaudo proyectado',money.format(recaudoProyectado)],
+        ['Comisión proyectada',money.format(currentData.projectedCommission||0)],
+        [],
+        ['CARTERAS'],
+        ['Cartera','Meta','Recaudo','Cumplimiento','Recaudo proyectado','Efectividad proyectada','Comisión estimada','Tasa'],
+        ...['VIGENTE','CASTIGO'].map(type=>{const group=groups[type];return [type,group.meta?money.format(group.meta):'Pendiente',money.format(group.total),group.meta?pct.format(group.compliance):'—',money.format(group.projectedTotal||group.total),group.meta?pct.format(group.projectedCompliance||0):'—',money.format(group.commission),group.rateText||'—'];}),
+        [],
+        ['EFECTIVIDAD GENERAL'],
+        ['Meta total',money.format(metaTotal)],
+        ['Recaudo total',money.format(recaudoTotal)],
+        ['Efectividad general',metaTotal?pct.format(recaudoTotal/metaTotal):'—']
+      ];
       const sheetRows=rows.map((row,rowIndex)=>`<row r="${rowIndex+1}">${row.map((value,columnIndex)=>{const text=String(value);const space=/^\s|\s$/.test(text)?' xml:space="preserve"':'';return `<c r="${excelColumn(columnIndex)}${rowIndex+1}" t="inlineStr"><is><t${space}>${xml(text)}</t></is></c>`;}).join('')}</row>`).join('');
       const sheet=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${sheetRows}</sheetData></worksheet>`;
-      const workbook=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Compromisos" sheetId="1" r:id="rId1"/></sheets></workbook>`;
+      const workbook=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Informe" sheetId="1" r:id="rId1"/></sheets></workbook>`;
       const archive=zipStore([
         ['[Content_Types].xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>'],
         ['_rels/.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
@@ -570,14 +587,14 @@
         ['xl/_rels/workbook.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>'],
         ['xl/worksheets/sheet1.xml',sheet]
       ]);
-      const originalName=(commitmentFileName||'compromisos').replace(/\.[^.]+$/,'').replace(/[^a-z0-9._-]+/gi,'-');
-      const link=document.createElement('a');const url=URL.createObjectURL(archive);link.href=url;link.download=`${originalName||'compromisos'}-adjunto.xlsx`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+      const link=document.createElement('a');const url=URL.createObjectURL(archive);link.href=url;link.download=`informe-comision-${key(currentPeriod)||'periodo'}.xlsx`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
     }
     let state=[], currentPeriod, currentData, currentAdvisorMetas=[], currentForecastRows=[], commitmentRecords=[], commitmentFileName='';
     function render(data){
       state=data.rows;
       currentPeriod=data.period;
       currentData=data;
+      document.querySelector('#downloadReport').disabled=false;
       currentAdvisorMetas=data.advisorMetas||[];
       currentForecastRows=data.forecastRows||[];
       document.querySelector('#period').textContent=monthFmt.format(data.period);
@@ -946,7 +963,7 @@
     document.querySelector('#refresh').addEventListener('click',load);
     document.querySelector('#monthPicker').addEventListener('change',load);
     document.querySelector('#downloadDetails').addEventListener('click',downloadDetails);
-    document.querySelector('#downloadCommitments').addEventListener('click',downloadCommitmentsExcel);
+    document.querySelector('#downloadReport').addEventListener('click',downloadReportExcel);
     document.querySelector('#commitmentsFile').addEventListener('change',async event=>{
       const file=event.target.files?.[0];
       if(!file)return;
@@ -955,7 +972,6 @@
     document.querySelector('#clearCommitments').addEventListener('click',()=>{
       commitmentRecords=[];
       commitmentFileName='';
-      updateCommitmentDownload();
       document.querySelector('#commitmentsFile').value='';
       if(currentData){currentData.forecastRows=[];recalc(currentData);render(currentData);}else updateCommitmentStatus(new Date(),[]);
     });
