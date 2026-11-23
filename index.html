@@ -61,7 +61,8 @@
     .projected-effectiveness-row td { color:#147257; background:#eaf8f2; }
     .projection-indicators { display:grid; grid-template-columns:max-content minmax(32px,1fr) max-content; align-items:center; column-gap:8px; row-gap:7px; margin-top:15px; color:#263e57; font-size:12px; }
     .projection-indicators .projection-label { white-space:nowrap; }
-    .projection-indicators .projection-line { height:1px; min-width:28px; }
+    .projection-indicators .projection-line { width:100%; height:1px; }
+    .projection-indicators .projection-line.effectiveness { justify-self:start; }
     .projection-indicators .projection-line.revenue { background:#1da889; }
     .projection-indicators .projection-line.effectiveness { background:#1da889; }
     .projection-indicators .projection-value { min-width:52px; text-align:right; font-weight:800; white-space:nowrap; }
@@ -418,7 +419,8 @@
     function portfolioProjectionIndicator(group){
       const revenue=group.projectedTotal||group.total||0;
       const effectiveness=group.projectedCompliance||0;
-      return `<div class="projection-indicators" aria-label="Indicadores proyectados"><span class="projection-label">recaudo proyectado</span><span class="projection-line revenue"></span><span class="projection-value">${compactMoney(revenue)}</span><span class="projection-label">efectividad proyectada</span><span class="projection-line effectiveness"></span><span class="projection-value">${pct.format(effectiveness)}</span></div>`;
+      const effectivenessWidth=Math.max(0,Math.min(effectiveness,1))*100;
+      return `<div class="projection-indicators" aria-label="Indicadores proyectados"><span class="projection-label">recaudo proyectado</span><span class="projection-line revenue"></span><span class="projection-value">${compactMoney(revenue)}</span><span class="projection-label">efectividad proyectada</span><span class="projection-line effectiveness" style="width:${effectivenessWidth}%"></span><span class="projection-value">${pct.format(effectiveness)}</span></div>`;
     }
     function activeCommitmentsForPeriod(period){if(key(period)!==key(new Date()))return [];return commitmentRecords.filter(row=>key(date(get(row,'FECHAPAGO')))==key(period)&&(!get(row,'ESTADOCOMPROMISO')||['VIGENTE','ACTIVO'].includes(norm(get(row,'ESTADOCOMPROMISO')))));}
     function updateCommitmentStatus(period, rows, forecastRows=[]){
