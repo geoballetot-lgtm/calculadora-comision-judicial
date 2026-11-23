@@ -28,6 +28,13 @@
     button:hover { background:#153c63; box-shadow:0 4px 12px #153c6330; transform:translateY(-1px); }
     .summary { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin-bottom:20px; }
     .summary-overview { grid-column:1/-1; }
+    .general-effectiveness { grid-column:1/-1; }
+    .general-effectiveness-content { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; align-items:stretch; }
+    .general-effectiveness-metric { padding:13px 15px; border:1px solid #dcebe5; border-radius:11px; background:#f7fcfa; }
+    .general-effectiveness-metric span { display:block; color:#567167; font-size:11px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
+    .general-effectiveness-metric strong { display:block; margin-top:4px; color:#165a46; font-size:22px; font-variant-numeric:tabular-nums; letter-spacing:-.4px; }
+    .general-effectiveness-metric.highlight { border-color:#95d8bd; background:#e9f8f0; }
+    .general-effectiveness-metric.highlight strong { color:#087153; }
     .overview-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
     .overview-metrics>div { padding:14px 16px; border:1px solid #e6edf4; border-radius:12px; background:#f9fbfd; }
     .overview-metrics>div:nth-child(n+3) { border-color:#dbe9f5; background:#f1f7fc; }
@@ -106,6 +113,10 @@
     :root[data-theme="dark"] .card h2 { color:#c0ccda; }
     :root[data-theme="dark"] .overview-metrics>div { border-color:var(--line); background:#172a40; }
     :root[data-theme="dark"] .overview-metrics>div:nth-child(n+3) { border-color:#304b66; background:#1b324a; }
+    :root[data-theme="dark"] .general-effectiveness-metric { border-color:#2f554b; background:#152d29; }
+    :root[data-theme="dark"] .general-effectiveness-metric.highlight { border-color:#367f68; background:#123b31; }
+    :root[data-theme="dark"] .general-effectiveness-metric span { color:#a8c8bd; }
+    :root[data-theme="dark"] .general-effectiveness-metric strong { color:#8fe0bb; }
     :root[data-theme="dark"] th { color:#c2d0df; background:#1a2c41; }
     :root[data-theme="dark"] th,
     :root[data-theme="dark"] td { border-color:#29394d; }
@@ -252,7 +263,7 @@
     .study-analysis-section { padding-top:18px; border-top:1px solid #e0e9f1; }
     .study-analysis-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); gap:12px; }
     @media(max-width:820px) { .comparison-heading,.study-heading { flex-direction:column; }.comparison-kpis,.study-kpis { grid-template-columns:1fr; } }
-    @media(max-width:820px) { .summary,.grid { grid-template-columns:1fr; } .overview-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); } .toolbar { align-items:flex-start; flex-direction:column; } #ranking table,#ranking tbody { display:block; } #ranking thead { display:none; } #ranking tr { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); margin-bottom:10px; overflow:hidden; border:1px solid var(--line); border-radius:10px; background:#fff; } #ranking td { display:flex; width:auto!important; min-width:0; flex-direction:column; align-items:flex-start; gap:3px; padding:8px 10px; white-space:normal; text-align:left!important; } #ranking td::before { color:#617083; font-size:9px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; } #ranking td:nth-child(1)::before { content:"Puesto"; } #ranking td:nth-child(2)::before { content:"Asesor"; } #ranking td:nth-child(3)::before { content:"Meta"; } #ranking td:nth-child(4)::before { content:"Recaudo actual"; } #ranking td:nth-child(5)::before { content:"Comisión actual"; } #ranking td:nth-child(6)::before { content:"Compromisos"; } #ranking td:nth-child(7)::before { content:"Recaudo proyectado"; } #ranking td:nth-child(8)::before { content:"Efectividad actual"; } #ranking td:nth-child(9)::before { content:"Efectividad proyectada"; } #ranking td:nth-child(10)::before { content:"Comisión proyectada"; } }
+    @media(max-width:820px) { .summary,.grid { grid-template-columns:1fr; } .overview-metrics,.general-effectiveness-content { grid-template-columns:repeat(2,minmax(0,1fr)); } .general-effectiveness-metric.highlight { grid-column:1/-1; } .toolbar { align-items:flex-start; flex-direction:column; } #ranking table,#ranking tbody { display:block; } #ranking thead { display:none; } #ranking tr { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); margin-bottom:10px; overflow:hidden; border:1px solid var(--line); border-radius:10px; background:#fff; } #ranking td { display:flex; width:auto!important; min-width:0; flex-direction:column; align-items:flex-start; gap:3px; padding:8px 10px; white-space:normal; text-align:left!important; } #ranking td::before { color:#617083; font-size:9px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; } #ranking td:nth-child(1)::before { content:"Puesto"; } #ranking td:nth-child(2)::before { content:"Asesor"; } #ranking td:nth-child(3)::before { content:"Meta"; } #ranking td:nth-child(4)::before { content:"Recaudo actual"; } #ranking td:nth-child(5)::before { content:"Comisión actual"; } #ranking td:nth-child(6)::before { content:"Compromisos"; } #ranking td:nth-child(7)::before { content:"Recaudo proyectado"; } #ranking td:nth-child(8)::before { content:"Efectividad actual"; } #ranking td:nth-child(9)::before { content:"Efectividad proyectada"; } #ranking td:nth-child(10)::before { content:"Comisión proyectada"; } }
     @media(max-width:520px) { header { padding-top:70px; padding-bottom:34px; } header h1,header p { max-width:calc(100% - 76px); } .theme-toggle { top:12px; right:12px; } .signature-mark { right:12px; bottom:8px; width:68px; height:42px; } main { margin-top:18px; padding:0 12px; } .card,.toolbar { padding:16px; } .overview-metrics { gap:8px; } .overview-metrics>div { padding:11px; } .leader-spotlight { align-items:flex-start; padding:15px; } .leader-rate { font-size:23px; } .ranking-actions { align-items:flex-start; flex-direction:column; } }
 
     /* Sistema visual: panel ejecutivo de recaudacion */
@@ -496,6 +507,15 @@
       const effectivenessWidth=Math.max(0,Math.min(effectiveness,1))*100;
       return `<div class="projection-indicators" aria-label="Indicadores proyectados"><span class="projection-label">recaudo proyectado</span><span class="projection-line revenue"></span><span class="projection-value">${compactMoney(revenue)}</span><span class="projection-label">efectividad proyectada</span><span class="projection-line effectiveness" style="width:${effectivenessWidth}%"></span><span class="projection-value">${pct.format(effectiveness)}</span></div>`;
     }
+    function generalEffectivenessCard(groups){
+      const meta=(groups.VIGENTE.meta||0)+(groups.CASTIGO.meta||0);
+      const collection=(groups.VIGENTE.total||0)+(groups.CASTIGO.total||0);
+      const effectiveness=meta?collection/meta:null;
+      const card=document.createElement('article');
+      card.className='card general-effectiveness';
+      card.innerHTML=`<h2>Efectividad general</h2><div class="general-effectiveness-content"><div class="general-effectiveness-metric"><span>Meta total</span><strong>${meta?money.format(meta):'Pendiente'}</strong></div><div class="general-effectiveness-metric"><span>Recaudo total</span><strong>${money.format(collection)}</strong></div><div class="general-effectiveness-metric highlight"><span>Efectividad general</span><strong>${effectiveness===null?'—':pct.format(effectiveness)}</strong></div></div>`;
+      return card;
+    }
     function activeCommitmentsForPeriod(period){if(key(period)!==key(new Date()))return [];return commitmentRecords.filter(row=>key(date(get(row,'FECHAPAGO')))==key(period)&&(!get(row,'ESTADOCOMPROMISO')||['VIGENTE','ACTIVO'].includes(norm(get(row,'ESTADOCOMPROMISO')))));}
     function updateCommitmentStatus(period, rows, forecastRows=[]){
       const status=document.querySelector('#commitmentStatus');
@@ -534,6 +554,7 @@
       overview.innerHTML=`<h2>Resumen de recaudo y comisión</h2><div class="overview-metrics"><div><div class="overview-label">Recaudo actual</div><div class="overview-value">${money.format(actualCollection)}</div></div><div><div class="overview-label">Comisión actual</div><div class="overview-value">${money.format(actualCommission)}</div></div><div><div class="overview-label">Recaudo proyectado</div><div class="overview-value">${money.format(projectedCollection)}</div></div><div><div class="overview-label">Comisión proyectada</div><div class="overview-value">${money.format(data.projectedCommission||0)}</div></div></div>`;
       summary.append(overview);
       ['VIGENTE','CASTIGO'].forEach(type=>{ const g=data.groups[type]; const card=document.createElement('article'); card.className='card'; card.innerHTML=`<h2>${type}</h2><div class="amount">${money.format(g.commission)}</div><div class="muted">Comisión estimada</div><table><tr><td>Meta</td><td class="num">${g.meta ? money.format(g.meta) : 'Pendiente'}</td></tr><tr><td>Cumplimiento</td><td class="num">${g.meta ? pct.format(g.compliance) : '—'}</td></tr><tr><td>Recaudo</td><td class="num">${money.format(g.total)}</td></tr><tr class="projected-row projected-revenue-row"><td>Recaudo proyectado</td><td class="num">${money.format(g.projectedTotal||g.total)}</td></tr><tr class="projected-row projected-effectiveness-row"><td>Efectividad proyectada</td><td class="num">${g.meta ? pct.format(g.projectedCompliance||0) : '—'}</td></tr><tr><td>Tasa</td><td class="num">${g.rateText || '—'}</td></tr></table>${portfolioProjectionIndicator(g)}`; summary.append(card); });
+      summary.append(generalEffectivenessCard(data.groups));
       updateCommitmentStatus(data.period,activeCommitmentsForPeriod(data.period),data.forecastRows||[]);
       const message=document.querySelector('#message'); const unmatched=data.rows.filter(x=>!x.matched).length; const fallback=data.rows.filter(x=>!x.matrixMatch&&x.matched).length; message.innerHTML=unmatched?`<div class="notice error">${unmatched} pago(s) no tienen clasificación ni en la matriz ni en pagos y quedaron fuera del cálculo.</div>`:fallback?`<div class="notice">${fallback} pago(s) no figuran en la matriz actual. Se usó su clasificación y antigüedad registradas en la base de pagos para incluirlos en el recaudo y comisión.</div>`:'';
       renderRanking(data);
