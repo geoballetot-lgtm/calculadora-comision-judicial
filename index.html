@@ -590,7 +590,7 @@
         ['xl/worksheets/sheet1.xml',sheet],
         ['xl/styles.xml',styles]
       ]);
-      const link=document.createElement('a');const url=URL.createObjectURL(archive);link.href=url;link.download=`informe-comision-${key(currentPeriod)||'periodo'}.xlsx`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+      downloadFile(archive,`informe-comision-${key(currentPeriod)||'periodo'}.xlsx`);
     }
     let state=[], currentPeriod, currentData, currentAdvisorMetas=[], currentForecastRows=[], commitmentRecords=[], commitmentFileName='';
     function render(data){
@@ -647,18 +647,24 @@
       else if(/^[=+\-@\t\r]/.test(text))text="'"+text;
       return `"${text.replace(/"/g,'""')}"`;
     }
+    function downloadFile(blob,filename){
+      const link=document.createElement('a');
+      const url=URL.createObjectURL(blob);
+      link.href=url;
+      link.download=filename;
+      link.style.display='none';
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),1000);
+    }
     function downloadDetails(){
       const headers=['Tipo de registro','Fecha','Asesor','Grupo ranking','Equipo','ID cliente','Nro operación','Monto','Cartera','Antigüedad judicial','Ruta comisión','Cumplimiento cartera','Tasa','Comisión actual','Comisión proyectada','Cruce con matriz'];
       const metaAdvisorKeys=new Set(currentAdvisorMetas.map(row=>advisorKey(get(row,'GESTOR'))));
       const rows=state.map(row=>['ACTUAL',row.fecha,row.gestor,metaAdvisorKeys.has(advisorKey(row.gestor))?row.gestor:'OTROS',advisorKey(row.gestor)==='KPAQUILLAURI'?'JUDICIAL':'EXTRAJUDICIAL',row.client,row.operacion,row.monto,row.cartera,row.antiguedad,row.route,pct.format(row.compliance),row.tasa===null?'':pct.format(row.tasa),row.comision,row.comisionProyectada||0,row.matrixMatch?'SI':'NO']);
       currentForecastRows.forEach(row=>rows.push(['PROYECCIÓN',row.fechaPago,row.gestor,metaAdvisorKeys.has(advisorKey(row.gestor))?row.gestor:'OTROS',advisorKey(row.gestor)==='KPAQUILLAURI'?'JUDICIAL':'EXTRAJUDICIAL',row.client,row.operacion,row.monto,row.cartera||'SIN CRUCE',row.antiguedad||'',row.route||'',row.compliance===undefined?'':pct.format(row.compliance),row.tasa===null?'':pct.format(row.tasa),0,row.comisionProyectada||0,row.matrixMatch?'SI':'NO']));
       const content='\uFEFF'+[headers,...rows].map(row=>row.map(csvCell).join(';')).join('\r\n');
-      const link=document.createElement('a');
-      const url=URL.createObjectURL(new Blob([content],{type:'text/csv;charset=utf-8'}));
-      link.href=url;
-      link.download=`detalle-comisiones-${key(currentPeriod)||'periodo'}.csv`;
-      link.click();
-      setTimeout(()=>URL.revokeObjectURL(url),1000);
+      downloadFile(new Blob([content],{type:'text/csv;charset=utf-8'}),`detalle-comisiones-${key(currentPeriod)||'periodo'}.csv`);
     }
     function recalc(data){
       for(const type of ['VIGENTE','CASTIGO']){const g=data.groups[type]; g.total=data.rows.filter(r=>r.cartera===type&&r.matched).reduce((s,r)=>s+r.monto,0);g.compliance=g.meta?g.total/g.meta:0;}
