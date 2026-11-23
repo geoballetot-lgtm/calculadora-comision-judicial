@@ -56,6 +56,7 @@
     #ranking th:nth-child(10),#ranking td:nth-child(10) { width:17%; }
     th { text-align:left; background:#f1f6fa; color:#49627a; font-size:11px; text-transform:uppercase; letter-spacing:.055em; }
     th,td { padding:12px 12px; border-bottom:1px solid #e9eef3; }
+    .projected-row td { color:#245b8a; background:#f1f7fc; font-weight:800; }
     tbody tr:hover { background:#f8fbfd; }
     #ranking tbody tr.leader-row { background:linear-gradient(90deg,#fff8e4,#fffdf7); box-shadow:inset 3px 0 #d9a330; }
     #ranking tbody tr.leader-row td:first-child { color:#8a6413; font-weight:800; }
@@ -99,6 +100,7 @@
     :root[data-theme="dark"] th { color:#c2d0df; background:#1a2c41; }
     :root[data-theme="dark"] th,
     :root[data-theme="dark"] td { border-color:#29394d; }
+    :root[data-theme="dark"] .projected-row td { color:#9dc9f0; background:#183148; }
     :root[data-theme="dark"] tbody tr:hover { background:#ffffff0a; }
     :root[data-theme="dark"] #ranking tr { background:#14263a; }
     :root[data-theme="dark"] #ranking tbody tr.leader-row { background:linear-gradient(90deg,#40371f,#252a32); }
@@ -434,7 +436,7 @@
       const overview=document.createElement('article'); overview.className='card summary-overview';
       overview.innerHTML=`<h2>Resumen de recaudo y comisión</h2><div class="overview-metrics"><div><div class="overview-label">Recaudo actual</div><div class="overview-value">${money.format(actualCollection)}</div></div><div><div class="overview-label">Comisión actual</div><div class="overview-value">${money.format(actualCommission)}</div></div><div><div class="overview-label">Recaudo proyectado</div><div class="overview-value">${money.format(projectedCollection)}</div></div><div><div class="overview-label">Comisión proyectada</div><div class="overview-value">${money.format(data.projectedCommission||0)}</div></div></div>`;
       summary.append(overview);
-      ['VIGENTE','CASTIGO'].forEach(type=>{ const g=data.groups[type]; const card=document.createElement('article'); card.className='card'; card.innerHTML=`<h2>${type}</h2><div class="amount">${money.format(g.commission)}</div><div class="muted">Comisión estimada</div><table><tr><td>Meta</td><td class="num">${g.meta ? money.format(g.meta) : 'Pendiente'}</td></tr><tr><td>Recaudo</td><td class="num">${money.format(g.total)}</td></tr><tr><td>Cumplimiento</td><td class="num">${g.meta ? pct.format(g.compliance) : '—'}</td></tr><tr><td>Tasa</td><td class="num">${g.rateText || '—'}</td></tr></table>`; summary.append(card); });
+      ['VIGENTE','CASTIGO'].forEach(type=>{ const g=data.groups[type]; const card=document.createElement('article'); card.className='card'; card.innerHTML=`<h2>${type}</h2><div class="amount">${money.format(g.commission)}</div><div class="muted">Comisión estimada</div><table><tr><td>Meta</td><td class="num">${g.meta ? money.format(g.meta) : 'Pendiente'}</td></tr><tr><td>Recaudo</td><td class="num">${money.format(g.total)}</td></tr><tr class="projected-row"><td>Recaudo proyectado</td><td class="num">${money.format(g.projectedTotal||g.total)}</td></tr><tr><td>Cumplimiento</td><td class="num">${g.meta ? pct.format(g.compliance) : '—'}</td></tr><tr><td>Tasa</td><td class="num">${g.rateText || '—'}</td></tr></table>`; summary.append(card); });
       updateCommitmentStatus(data.period,activeCommitmentsForPeriod(data.period),data.forecastRows||[]);
       const message=document.querySelector('#message'); const unmatched=data.rows.filter(x=>!x.matched).length; const fallback=data.rows.filter(x=>!x.matrixMatch&&x.matched).length; message.innerHTML=unmatched?`<div class="notice error">${unmatched} pago(s) no tienen clasificación ni en la matriz ni en pagos y quedaron fuera del cálculo.</div>`:fallback?`<div class="notice">${fallback} pago(s) no figuran en la matriz actual. Se usó su clasificación y antigüedad registradas en la base de pagos para incluirlos en el recaudo y comisión.</div>`:'';
       renderRanking(data);
@@ -490,7 +492,7 @@
       const projectedByType={VIGENTE:0,CASTIGO:0};
       data.forecastRows.forEach(row=>{if(row.matched)projectedByType[row.cartera]+=row.monto;});
       const projectedCompliance={};
-      for(const type of ['VIGENTE','CASTIGO']){const group=data.groups[type];projectedCompliance[type]=group.meta?(group.total+projectedByType[type])/group.meta:0;}
+      for(const type of ['VIGENTE','CASTIGO']){const group=data.groups[type];group.projectedTotal=group.total+projectedByType[type];projectedCompliance[type]=group.meta?group.projectedTotal/group.meta:0;}
       const projectedRate=row=>row.matched&&data.groups[row.cartera]?.meta?rate(row.cartera,projectedCompliance[row.cartera],row.route):null;
       data.rows.forEach(row=>{row.comisionProyectada=(projectedRate(row)??0)*row.monto;});
       data.forecastRows.forEach(row=>{row.compliance=projectedCompliance[row.cartera]||0;row.tasa=projectedRate(row);row.comisionProyectada=(row.tasa??0)*row.monto;});
