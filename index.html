@@ -56,19 +56,21 @@
     #ranking th:nth-child(10),#ranking td:nth-child(10) { width:17%; }
     th { text-align:left; background:#f1f6fa; color:#49627a; font-size:11px; text-transform:uppercase; letter-spacing:.055em; }
     th,td { padding:12px 12px; border-bottom:1px solid #e9eef3; }
-    .projected-row td { color:#245b8a; background:#f1f7fc; font-weight:800; }
+    .projected-row td { font-weight:800; }
+    .projected-revenue-row td { color:#147257; background:#eaf8f2; }
+    .projected-effectiveness-row td { color:#a8363d; background:#fff0f1; }
     .portfolio-chart-card { grid-column:1/-1; }
     .portfolio-chart-card h2 { margin-bottom:4px; }
     .portfolio-chart-copy { margin:0 0 10px; color:#617083; font-size:12px; }
     .portfolio-chart-legend { display:flex; flex-wrap:wrap; gap:14px; margin:0 0 4px; color:#617083; font-size:11px; font-weight:700; }
-    .portfolio-chart-legend i { display:inline-block; width:9px; height:9px; margin-right:4px; border-radius:50%; background:#2f82c9; }
-    .portfolio-chart-legend i.effectiveness { background:#2aa980; }
+    .portfolio-chart-legend i { display:inline-block; width:22px; height:2px; margin:0 5px 3px 0; vertical-align:middle; background:#1da889; }
+    .portfolio-chart-legend i.effectiveness { background:#e4525b; }
     .portfolio-chart { display:block; width:100%; max-height:200px; }
     .portfolio-grid-line { stroke:#dce7ef; stroke-width:1; }
-    .portfolio-meta-line { fill:none; stroke:#2f82c9; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
-    .portfolio-effectiveness-line { fill:none; stroke:#2aa980; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
-    .portfolio-meta-point { fill:#2f82c9; }
-    .portfolio-effectiveness-point { fill:#2aa980; }
+    .portfolio-revenue-line { fill:none; stroke:#1da889; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
+    .portfolio-effectiveness-line { fill:none; stroke:#e4525b; stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
+    .portfolio-revenue-point { fill:#1da889; }
+    .portfolio-effectiveness-point { fill:#e4525b; }
     .portfolio-axis-label,.portfolio-point-label { fill:#617083; font:11px Inter,Segoe UI,Arial,sans-serif; }
     .portfolio-point-label { font-weight:800; }
     tbody tr:hover { background:#f8fbfd; }
@@ -114,7 +116,8 @@
     :root[data-theme="dark"] th { color:#c2d0df; background:#1a2c41; }
     :root[data-theme="dark"] th,
     :root[data-theme="dark"] td { border-color:#29394d; }
-    :root[data-theme="dark"] .projected-row td { color:#9dc9f0; background:#183148; }
+    :root[data-theme="dark"] .projected-revenue-row td { color:#8ee0b6; background:#173c31; }
+    :root[data-theme="dark"] .projected-effectiveness-row td { color:#ffb7bc; background:#48262d; }
     :root[data-theme="dark"] .portfolio-chart-copy,
     :root[data-theme="dark"] .portfolio-chart-legend { color:#adbdcf; }
     :root[data-theme="dark"] .portfolio-grid-line { stroke:#30475d; }
@@ -418,21 +421,23 @@
       });
     }
     function rate(cartera, compliance, route){ const i=routes.indexOf(route); const band=(rates[cartera]||[]).find(x=>compliance>=x[0]&&compliance<=x[1]); return band ? band[2][i] : null; }
-    function projectedPortfolioChart(groups){
-      const series=['VIGENTE','CASTIGO'].map(type=>({type,meta:groups[type]?.meta||0,effectiveness:groups[type]?.projectedCompliance||0}));
-      const width=860, height=190, left=92, right=82, top=22, bottom=42;
+    function portfolioProjectionChart(group,type){
+      const revenue=[group.total||0,group.projectedTotal||group.total||0];
+      const effectiveness=[group.compliance||0,group.projectedCompliance||0];
+      const width=440, height=142, left=58, right=54, top=16, bottom=28;
       const plotWidth=width-left-right, plotHeight=height-top-bottom;
-      const maxMeta=Math.max(1,...series.map(item=>item.meta));
-      const maxEffectiveness=Math.max(1,...series.map(item=>item.effectiveness));
-      const x=index=>left+(series.length===1?plotWidth/2:index*plotWidth/(series.length-1));
-      const yMeta=value=>top+plotHeight-(value/maxMeta*plotHeight);
+      const maxRevenue=Math.max(1,...revenue);
+      const maxEffectiveness=Math.max(1,...effectiveness);
+      const x=index=>left+index*plotWidth;
+      const yRevenue=value=>top+plotHeight-(value/maxRevenue*plotHeight);
       const yEffectiveness=value=>top+plotHeight-(value/maxEffectiveness*plotHeight);
-      const points=(field,y,pointClass)=>series.map((item,index)=>`<circle class="${pointClass}" cx="${x(index)}" cy="${y(item[field]).toFixed(1)}" r="5"><title>${item.type}: ${field==='meta'?money.format(item[field]):pct.format(item[field])}</title></circle>`).join('');
-      const grid=[0,.5,1].map(level=>{const y=top+plotHeight-(level*plotHeight);return `<line class="portfolio-grid-line" x1="${left}" x2="${width-right}" y1="${y}" y2="${y}"></line><text class="portfolio-axis-label" x="${left-10}" y="${y+4}" text-anchor="end">${html(money.format(maxMeta*level))}</text><text class="portfolio-axis-label" x="${width-right+10}" y="${y+4}">${html(pct.format(maxEffectiveness*level))}</text>`;}).join('');
-      const labels=series.map((item,index)=>`<text class="portfolio-point-label" x="${x(index)}" y="${height-12}" text-anchor="middle">${item.type}</text>`).join('');
-      const metaLine=series.map((item,index)=>`${x(index)},${yMeta(item.meta).toFixed(1)}`).join(' ');
-      const effectivenessLine=series.map((item,index)=>`${x(index)},${yEffectiveness(item.effectiveness).toFixed(1)}`).join(' ');
-      return `<h2>Meta y efectividad proyectada por cartera</h2><p class="portfolio-chart-copy">La línea azul usa la escala izquierda (S/) y la verde la escala derecha (%).</p><div class="portfolio-chart-legend"><span><i></i>Meta</span><span><i class="effectiveness"></i>Efectividad proyectada</span></div><svg class="portfolio-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Gráfico lineal de meta y efectividad proyectada por cartera">${grid}<polyline class="portfolio-meta-line" points="${metaLine}"></polyline><polyline class="portfolio-effectiveness-line" points="${effectivenessLine}"></polyline>${points('meta',yMeta,'portfolio-meta-point')}${points('effectiveness',yEffectiveness,'portfolio-effectiveness-point')}${labels}</svg>`;
+      const grid=[0,.5,1].map(level=>{const y=top+plotHeight-(level*plotHeight);return `<line class="portfolio-grid-line" x1="${left}" x2="${width-right}" y1="${y}" y2="${y}"></line><text class="portfolio-axis-label" x="${left-7}" y="${y+4}" text-anchor="end">${html(money.format(maxRevenue*level))}</text><text class="portfolio-axis-label" x="${width-right+7}" y="${y+4}">${html(pct.format(maxEffectiveness*level))}</text>`;}).join('');
+      const revenueLine=revenue.map((value,index)=>`${x(index)},${yRevenue(value).toFixed(1)}`).join(' ');
+      const effectivenessLine=effectiveness.map((value,index)=>`${x(index)},${yEffectiveness(value).toFixed(1)}`).join(' ');
+      const labels=['Actual','Proyectado'].map((label,index)=>`<text class="portfolio-point-label" x="${x(index)}" y="${height-8}" text-anchor="middle">${label}</text>`).join('');
+      const revenuePoints=revenue.map((value,index)=>`<circle class="portfolio-revenue-point" cx="${x(index)}" cy="${yRevenue(value).toFixed(1)}" r="4"><title>${type} ${index?'proyectado':'actual'}: ${money.format(value)}</title></circle>`).join('');
+      const effectivenessPoints=effectiveness.map((value,index)=>`<circle class="portfolio-effectiveness-point" cx="${x(index)}" cy="${yEffectiveness(value).toFixed(1)}" r="4"><title>${type} ${index?'proyectada':'actual'}: ${pct.format(value)}</title></circle>`).join('');
+      return `<div class="portfolio-chart-legend"><span><i></i>Recaudo proyectado</span><span><i class="effectiveness"></i>Efectividad proyectada</span></div><svg class="portfolio-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Recaudo y efectividad proyectada de ${type}">${grid}<polyline class="portfolio-revenue-line" points="${revenueLine}"></polyline><polyline class="portfolio-effectiveness-line" points="${effectivenessLine}"></polyline>${revenuePoints}${effectivenessPoints}${labels}</svg>`;
     }
     function activeCommitmentsForPeriod(period){if(key(period)!==key(new Date()))return [];return commitmentRecords.filter(row=>key(date(get(row,'FECHAPAGO')))==key(period)&&(!get(row,'ESTADOCOMPROMISO')||['VIGENTE','ACTIVO'].includes(norm(get(row,'ESTADOCOMPROMISO')))));}
     function updateCommitmentStatus(period, rows, forecastRows=[]){
@@ -471,8 +476,7 @@
       const overview=document.createElement('article'); overview.className='card summary-overview';
       overview.innerHTML=`<h2>Resumen de recaudo y comisión</h2><div class="overview-metrics"><div><div class="overview-label">Recaudo actual</div><div class="overview-value">${money.format(actualCollection)}</div></div><div><div class="overview-label">Comisión actual</div><div class="overview-value">${money.format(actualCommission)}</div></div><div><div class="overview-label">Recaudo proyectado</div><div class="overview-value">${money.format(projectedCollection)}</div></div><div><div class="overview-label">Comisión proyectada</div><div class="overview-value">${money.format(data.projectedCommission||0)}</div></div></div>`;
       summary.append(overview);
-      ['VIGENTE','CASTIGO'].forEach(type=>{ const g=data.groups[type]; const card=document.createElement('article'); card.className='card'; card.innerHTML=`<h2>${type}</h2><div class="amount">${money.format(g.commission)}</div><div class="muted">Comisión estimada</div><table><tr><td>Meta</td><td class="num">${g.meta ? money.format(g.meta) : 'Pendiente'}</td></tr><tr><td>Cumplimiento</td><td class="num">${g.meta ? pct.format(g.compliance) : '—'}</td></tr><tr class="projected-row"><td>Efectividad proyectada</td><td class="num">${g.meta ? pct.format(g.projectedCompliance||0) : '—'}</td></tr><tr><td>Recaudo</td><td class="num">${money.format(g.total)}</td></tr><tr class="projected-row"><td>Recaudo proyectado</td><td class="num">${money.format(g.projectedTotal||g.total)}</td></tr><tr><td>Tasa</td><td class="num">${g.rateText || '—'}</td></tr></table>`; summary.append(card); });
-      const projectedChart=document.createElement('article'); projectedChart.className='card portfolio-chart-card'; projectedChart.innerHTML=projectedPortfolioChart(data.groups); summary.append(projectedChart);
+      ['VIGENTE','CASTIGO'].forEach(type=>{ const g=data.groups[type]; const card=document.createElement('article'); card.className='card'; card.innerHTML=`<h2>${type}</h2><div class="amount">${money.format(g.commission)}</div><div class="muted">Comisión estimada</div><table><tr><td>Meta</td><td class="num">${g.meta ? money.format(g.meta) : 'Pendiente'}</td></tr><tr><td>Cumplimiento</td><td class="num">${g.meta ? pct.format(g.compliance) : '—'}</td></tr><tr><td>Recaudo</td><td class="num">${money.format(g.total)}</td></tr><tr class="projected-row projected-revenue-row"><td>Recaudo proyectado</td><td class="num">${money.format(g.projectedTotal||g.total)}</td></tr><tr class="projected-row projected-effectiveness-row"><td>Efectividad proyectada</td><td class="num">${g.meta ? pct.format(g.projectedCompliance||0) : '—'}</td></tr><tr><td>Tasa</td><td class="num">${g.rateText || '—'}</td></tr></table><div class="portfolio-chart-copy">Proyección de ${type.toLowerCase()}</div>${portfolioProjectionChart(g,type)}`; summary.append(card); });
       updateCommitmentStatus(data.period,activeCommitmentsForPeriod(data.period),data.forecastRows||[]);
       const message=document.querySelector('#message'); const unmatched=data.rows.filter(x=>!x.matched).length; const fallback=data.rows.filter(x=>!x.matrixMatch&&x.matched).length; message.innerHTML=unmatched?`<div class="notice error">${unmatched} pago(s) no tienen clasificación ni en la matriz ni en pagos y quedaron fuera del cálculo.</div>`:fallback?`<div class="notice">${fallback} pago(s) no figuran en la matriz actual. Se usó su clasificación y antigüedad registradas en la base de pagos para incluirlos en el recaudo y comisión.</div>`:'';
       renderRanking(data);
