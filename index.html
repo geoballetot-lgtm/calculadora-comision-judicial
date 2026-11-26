@@ -17,6 +17,25 @@
     .toolbar, .card { background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); }
     .toolbar { display:flex; align-items:center; gap:18px; justify-content:space-between; padding:20px 22px; margin-bottom:20px; }
     .actions { display:flex; flex-wrap:wrap; align-items:end; gap:10px; }
+    .print-report { display:none; }
+    @media print {
+      @page { size:A4; margin:12mm; }
+      body > *:not(.print-report) { display:none !important; }
+      body { background:#fff !important; color:#102a43; font-size:11px; }
+      .print-report { display:block; }
+      .print-report h1 { margin:0 0 2mm; font-size:20px; color:#103b63; }
+      .print-report .print-period { margin:0 0 6mm; color:#526478; }
+      .print-report .summary { display:grid; grid-template-columns:1fr 1fr; gap:4mm; }
+      .print-report .card { break-inside:avoid; box-shadow:none; border:1px solid #cbdce7; padding:4mm; }
+      .print-report .summary-overview,.print-report .general-effectiveness { grid-column:1/-1; }
+      .print-report .overview-metrics { grid-template-columns:repeat(4,1fr); gap:2mm; }
+      .print-report .overview-metrics>div,.print-report .general-effectiveness-metric { padding:2mm; }
+      .print-report .overview-value,.print-report .general-effectiveness-metric strong { font-size:13px; }
+      .print-report .amount { font-size:19px !important; }
+      .print-report td { padding:2mm !important; }
+      .print-report .projection-indicators { margin-top:2mm; padding:2mm; }
+      .print-report * { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    }
     .ranking-actions { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; }
     .upload { display:flex; flex-wrap:wrap; align-items:end; gap:12px; }
     .upload input[type="file"] { max-width:100%; border:1px solid #c5d2df; border-radius:8px; padding:8px; background:#fff; color:#27394c; font:inherit; }
@@ -357,7 +376,7 @@
     <section class="page-panel" id="calculatorPanel" role="tabpanel" aria-labelledby="calculatorTabButton">
     <section class="toolbar">
       <div><div class="muted">Período aplicado</div><div class="period" id="period">Cargando…</div><div class="muted" id="rule"></div></div>
-      <div class="actions"><label>Mes a calcular<input id="monthPicker" type="month" /></label><button id="refresh">Actualizar datos</button><button id="downloadReport" type="button" disabled>Descargar informe Excel</button></div>
+      <div class="actions"><label>Mes a calcular<input id="monthPicker" type="month" /></label><button id="refresh">Actualizar datos</button><button id="downloadReport" type="button" disabled>Descargar informe Excel</button><button id="downloadPdf" type="button" disabled>Guardar informe en PDF</button></div>
     </section>
     <section class="card" style="margin-bottom:20px">
       <h2>Proyección de compromisos</h2>
@@ -599,6 +618,7 @@
       currentPeriod=data.period;
       currentData=data;
       document.querySelector('#downloadReport').disabled=false;
+      document.querySelector('#downloadPdf').disabled=false;
       currentAdvisorMetas=data.advisorMetas||[];
       currentForecastRows=data.forecastRows||[];
       document.querySelector('#period').textContent=monthFmt.format(data.period);
@@ -974,6 +994,16 @@
     document.querySelector('#monthPicker').addEventListener('change',load);
     document.querySelector('#downloadDetails').addEventListener('click',downloadDetails);
     document.querySelector('#downloadReport').addEventListener('click',downloadReportExcel);
+    document.querySelector('#downloadPdf').addEventListener('click',()=>{
+      if(!currentData)return;
+      const report=document.createElement('section');
+      report.className='print-report';
+      const title=document.createElement('h1');title.textContent='Informe de comisión judicial';
+      const period=document.createElement('p');period.className='print-period';period.textContent=`Período: ${monthFmt.format(currentPeriod)}`;
+      const summary=document.querySelector('#summary').cloneNode(true);summary.removeAttribute('id');
+      report.append(title,period,summary);document.body.append(report);
+      try{window.print();}finally{report.remove();}
+    });
     document.querySelector('#commitmentsFile').addEventListener('change',async event=>{
       const file=event.target.files?.[0];
       if(!file)return;
